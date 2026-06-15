@@ -1,16 +1,36 @@
 "use client";
 
 import { cn } from "@zenncore/utils";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuIcon,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuPopup,
+  NavigationMenuPositioner,
+  NavigationMenuTrigger,
+  NavigationMenuViewport,
+} from "@zenncore/web/components/navigation-menu";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import {
   BellIcon,
+  BoltIcon,
   CoinIcon,
+  CompassIcon,
+  FireIcon,
+  GhostIcon,
+  HeartIcon,
+  type IconProps,
   MenuIcon,
   PenIcon,
   SearchIcon,
+  SparkleIcon,
+  StarIcon,
   UserIcon,
   XIcon,
 } from "@/components/icons";
@@ -21,39 +41,102 @@ export type NavUser = {
   coins: number;
 };
 
+export type NavGenre = {
+  slug: string;
+  name: string;
+  accent: string | null;
+};
+
 const links = [
-  { href: "/discover", label: "Discover" },
   { href: "/leaderboards", label: "Leaderboards" },
   { href: "/challenges", label: "Challenges" },
 ] as const;
 
-export const NavBar = ({ user }: NavBar.Props) => {
-  const [scrolled, setScrolled] = useState(false);
+type GenreMeta = {
+  icon: (props: IconProps) => ReactNode;
+  description: string;
+};
+
+const genreMeta: Record<string, GenreMeta> = {
+  "sci-fi": { icon: SparkleIcon, description: "Futures, machines, and the edge of possibility" },
+  fantasy: { icon: StarIcon, description: "Magic, myth, and worlds unbound" },
+  horror: { icon: GhostIcon, description: "Dread that follows you home" },
+  romance: { icon: HeartIcon, description: "Hearts on the line" },
+  mystery: { icon: CompassIcon, description: "Clues, twists, and the truth beneath" },
+  cyberpunk: { icon: BoltIcon, description: "Neon, rain, and machine dreams" },
+  thriller: { icon: FireIcon, description: "Pulse-pounding, page-turning tension" },
+  literary: { icon: PenIcon, description: "Quiet, human, beautifully written" },
+};
+
+const fallbackMeta: GenreMeta = {
+  icon: SparkleIcon,
+  description: "Living, branching stories",
+};
+
+export const NavBar = ({ user, genres = [] }: NavBar.Props) => {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: close menu on navigation
+  // biome-ignore lint/correctness/useExhaustiveDependencies: close mobile menu on navigation
   useEffect(() => setOpen(false), [pathname]);
 
   return (
-    <header
-      className={cn(
-        "fixed inset-x-0 top-0 z-50 transition-colors duration-300",
-        scrolled || open
-          ? "border-white/8 border-b bg-background/85 backdrop-blur-xl"
-          : "bg-gradient-to-b from-background/80 to-transparent",
-      )}
-    >
-      <nav className="mx-auto flex h-[68px] max-w-7xl items-center gap-6 px-4 sm:px-6">
+    <header className="fixed inset-x-0 top-0 z-50 border-white/8 border-b bg-background/72 backdrop-blur-xl">
+      <nav className="mx-auto flex h-[68px] max-w-7xl items-center gap-5 px-4 sm:px-6">
         <Logo />
-        <div className="hidden items-center gap-5 md:flex">
+        <div className="hidden items-center gap-4 md:flex">
+          <NavigationMenu className="bg-transparent p-0 text-foreground">
+            <NavigationMenuList className="gap-1">
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="flex items-center gap-1 rounded-md bg-transparent px-2 py-1.5 font-medium font-subtitle text-foreground-dimmed text-sm transition hover:text-foreground data-popup-open:text-foreground">
+                  Discover
+                  <NavigationMenuIcon
+                    classList={{ icon: "size-3.5 stroke-current" }}
+                  />
+                </NavigationMenuTrigger>
+                <NavigationMenuContent className="p-0">
+                  <div className="grid w-[560px] grid-cols-2 gap-1 p-2.5">
+                    {genres.map((genre) => {
+                      const meta = genreMeta[genre.slug] ?? fallbackMeta;
+                      const Icon = meta.icon;
+                      const accent = genre.accent ?? "#e8b45a";
+                      return (
+                        <NavigationMenuLink
+                          key={genre.slug}
+                          render={<Link href={`/discover?genre=${genre.slug}`} />}
+                          className="flex items-start gap-3 rounded-lg p-3 no-underline transition hover:bg-white/5"
+                        >
+                          <span
+                            className="flex size-9 shrink-0 items-center justify-center rounded-lg"
+                            style={{
+                              backgroundColor: `${accent}1f`,
+                              color: accent,
+                            }}
+                          >
+                            <Icon className="size-[18px]" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block font-display font-medium text-foreground text-sm">
+                              {genre.name}
+                            </span>
+                            <span className="block font-body text-foreground-dimmed text-xs leading-snug">
+                              {meta.description}
+                            </span>
+                          </span>
+                        </NavigationMenuLink>
+                      );
+                    })}
+                  </div>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+            <NavigationMenuPositioner sideOffset={16} align="start">
+              <NavigationMenuPopup className="rounded-xl border border-white/10 bg-background-rich text-foreground shadow-[0_28px_80px_-20px_rgba(0,0,0,0.85)] outline-0">
+                <NavigationMenuViewport />
+              </NavigationMenuPopup>
+            </NavigationMenuPositioner>
+          </NavigationMenu>
+
           {links.map((link) => (
             <NavLink
               key={link.href}
@@ -118,22 +201,51 @@ export const NavBar = ({ user }: NavBar.Props) => {
       </nav>
 
       {open ? (
-        <div className="flex flex-col gap-1 border-white/8 border-t px-4 py-3 md:hidden">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="rounded-md px-3 py-2 font-medium text-foreground-rich text-sm hover:bg-white/5"
-            >
-              {link.label}
-            </Link>
-          ))}
+        <div className="max-h-[70vh] space-y-4 overflow-y-auto border-white/8 border-t bg-background-rich px-4 py-4 md:hidden">
           <Link
-            href="/write"
-            className="rounded-md px-3 py-2 font-medium text-primary text-sm hover:bg-white/5"
+            href="/discover"
+            className="block font-medium text-foreground-rich text-sm"
           >
-            Create chapter
+            Discover
           </Link>
+          <div className="grid grid-cols-2 gap-1.5">
+            {genres.map((genre) => {
+              const meta = genreMeta[genre.slug] ?? fallbackMeta;
+              const Icon = meta.icon;
+              const accent = genre.accent ?? "#e8b45a";
+              return (
+                <Link
+                  key={genre.slug}
+                  href={`/discover?genre=${genre.slug}`}
+                  className="flex items-center gap-2 rounded-lg border border-white/8 px-2.5 py-2"
+                >
+                  <span style={{ color: accent }}>
+                    <Icon className="size-4" />
+                  </span>
+                  <span className="font-medium text-foreground text-xs">
+                    {genre.name}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+          <div className="flex flex-col gap-1 border-white/8 border-t pt-3">
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="rounded-md px-1 py-1.5 font-medium text-foreground-rich text-sm"
+              >
+                {link.label}
+              </Link>
+            ))}
+            <Link
+              href="/write"
+              className="rounded-md px-1 py-1.5 font-medium text-primary text-sm"
+            >
+              Create chapter
+            </Link>
+          </div>
         </div>
       ) : null}
     </header>
@@ -143,6 +255,7 @@ export const NavBar = ({ user }: NavBar.Props) => {
 export namespace NavBar {
   export type Props = {
     user: NavUser | null;
+    genres: NavGenre[];
   };
 }
 

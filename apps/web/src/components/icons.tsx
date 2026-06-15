@@ -140,6 +140,19 @@ export const ShareIcon = (props: IconProps) => (
   </Glyph>
 );
 
+export const BoltIcon = ({ className, ...props }: IconProps) => (
+  <Glyph className={cn("fill-current", className)} stroke="none" {...props}>
+    <path d="M13 2 4.5 13.2c-.3.4 0 .9.5.9H11l-1 8 8.5-11.2c.3-.4 0-.9-.5-.9H12z" />
+  </Glyph>
+);
+
+export const GhostIcon = (props: IconProps) => (
+  <Glyph {...props}>
+    <path d="M5 21v-9a7 7 0 0 1 14 0v9l-2.3-1.8-2.3 1.8-2.1-1.8L10 21l-2.3-1.8z" />
+    <path d="M9.5 10h.01M14.5 10h.01" />
+  </Glyph>
+);
+
 export {
   ArrowRightIcon,
   CheckBadgeIcon,
