@@ -1,0 +1,63 @@
+{
+  "name": "@zenncore/mobile",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit",
+    "outdated": "bunx expo install --check",
+    "clean": "rm -rf .turbo dist node_modules"
+  },
+  "dependencies": {
+    "@expo/metro-config": "~55.0.22",
+    "@gorhom/bottom-sheet": "^5.2.14",
+    "@zenncore/icons": "workspace:*",
+    "@zenncore/utils": "workspace:*",
+    "expo-image": "~55.0.10",
+    "heroui-native": "^1.0.3",
+    "metro-cache": "^0.84.4",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.23.0",
+    "react-native-svg": "15.15.3"
+  },
+  "peerDependencies": {
+    "expo": "catalog:mobile",
+    "react": "catalog:mobile",
+    "react-native": "catalog:mobile",
+    "react-native-gesture-handler": "catalog:mobile",
+    "react-native-keyboard-controller": "1.21.7",
+    "react-native-reanimated": "catalog:mobile",
+    "react-native-teleport": "catalog:mobile",
+    "react-native-worklets": "catalog:mobile",
+    "react-hook-form": "catalog:",
+    "uniwind": "catalog:mobile"
+  },
+  "devDependencies": {
+    "@babel/generator": "^7.29.1",
+    "@babel/parser": "^7.29.3",
+    "@babel/traverse": "^7.29.0",
+    "@babel/types": "^7.29.0",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:mobile",
+    "@zenncore/config": "workspace:*",
+    "tailwindcss": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:mobile"
+  },
+  "exports": {
+    "./components/*": {
+      "types": "./dist/components/*/index.d.ts",
+      "import": "./dist/components/*/index.js"
+    },
+    "./*": {
+      "types": "./dist/*/index.d.ts",
+      "import": "./dist/*/index.js"
+    },
+    "./config/metro": "./src/config/metro/index.ts",
+    "./config/typescript": "./src/config/typescript/config.json",
+    "./config/tailwind": "./src/config/tailwind/globals.css"
+  }
+}

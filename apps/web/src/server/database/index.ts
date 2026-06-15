@@ -1,0 +1,51 @@
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import { relations, tables } from "./schema";
+
+const schema = { ...tables, ...relations };
+
+/**
+ * Postgres client for server-side only (no connection in edge runtime by default).
+ * For serverless, use a connection pooler (e.g. PgBouncer) or pool with max 1.
+ */
+const client = postgres(process.env.DATABASE_URL, {
+  max: 10,
+  idle_timeout: 20,
+  connect_timeout: 10,
+});
+
+/**
+ * Drizzle instance with schema for typed queries and relations.
+ * Use this with better-auth's drizzleAdapter and with the repository helper.
+ */
+export const db = drizzle({ client, schema });
+
+export type TransactionScope = Parameters<
+  Parameters<typeof db.transaction>[0]
+>[0];
+
+export const withTransaction = <T>(
+  callback: (tx: TransactionScope) => Promise<T>,
+): Promise<T> => db.transaction(callback);
+
+export type {
+  abuseReport,
+  account,
+  challenge,
+  chapter,
+  chapterLike,
+  coinLedger,
+  cosmetic,
+  follow,
+  genre,
+  leaderboardSnapshot,
+  moderationQueue,
+  readPath,
+  save,
+  session,
+  universe,
+  user,
+  userCosmetic,
+  verification,
+} from "./schema";
+export { tables as schema };

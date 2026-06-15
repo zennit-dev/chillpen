@@ -1,0 +1,145 @@
+@import "@zenncore/config/tailwind";
+@import "@zenncore/web/config/tailwind";
+
+/*
+ * chillpen.club — dark-luxury theme.
+ * Re-themes the @zenncore semantic tokens so every component inherits the
+ * Netflix-grade near-black canvas + molten-gold accent for free. The app always
+ * renders with `.dark` on <html>, so the dark variant carries the real palette.
+ */
+
+@theme {
+  --font-body: var(--font-inter);
+  --font-display: var(--font-sora);
+  --font-subtitle: var(--font-manrope);
+  --font-reading: var(--font-instrument-serif);
+}
+
+@variant dark {
+  /* canvas — warm near-black, not pure black (DESIGN.md §2) */
+  --color-background-dimmed: #060608;
+  --color-background: #0a0a0d;
+  --color-background-rich: #15151b;
+
+  /* text — warm white ramp by brightness, not color (DESIGN.md §2) */
+  --color-foreground: #f6f4f1;
+  --color-foreground-rich: #cfccc6;
+  --color-foreground-dimmed: #8a8a93;
+
+  /* brand accent — molten gold (every CTA, ★, hover, hero glow) */
+  --color-primary-dimmed: #c8902f;
+  --color-primary: #e8b45a;
+  --color-primary-rich: #f0c97a;
+  --color-primary-foreground: #0a0a0d;
+
+  /* surfaces + hairlines — subtle glass elevation over the canvas */
+  --color-accent-dimmed: #101015;
+  --color-accent: #17171d;
+  --color-accent-rich: #232329;
+  --color-accent-foreground: #2c2c34;
+
+  /* emphasis — inverted (light) chips/buttons */
+  --color-emphasis-dimmed: #f6f4f1;
+  --color-emphasis: #26262e;
+  --color-emphasis-rich: #f6f4f1;
+  --color-emphasis-foreground: #0a0a0d;
+
+  /* secondary — quiet elevated neutral */
+  --color-secondary-dimmed: #1a1a20;
+  --color-secondary: #26262e;
+  --color-secondary-rich: #34343d;
+  --color-secondary-foreground: #f6f4f1;
+
+  /* status — kept legible on dark */
+  --color-error-dimmed: #3a1418;
+  --color-error: #e5364b;
+  --color-error-rich: #f87171;
+  --color-error-foreground: #fca5a5;
+  --color-success: #34d399;
+  --color-info: #60a5fa;
+  --color-warning: #fbbf24;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    scrollbar-color: var(--color-accent-rich) transparent;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: color-mix(
+      in oklab,
+      var(--color-primary) 28%,
+      transparent
+    );
+    color: var(--color-foreground);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-accent-rich);
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-foreground-dimmed);
+  }
+}
+
+/* glass surface — frosted panel used on overlays, cards, CTAs */
+@utility glass {
+  background-color: color-mix(
+    in oklab,
+    var(--color-background-rich) 60%,
+    transparent
+  );
+  backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid color-mix(in oklab, white 8%, transparent);
+}
+
+/* hide horizontal scrollbar on carousel tracks while keeping scroll */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* fade a row's right edge to signal "more this way" */
+@utility edge-fade-r {
+  mask-image: linear-gradient(to right, black 88%, transparent 100%);
+}
+
+/* ── View Transitions ──────────────────────────────────────────────────────
+ * A gentle crossfade between pages, plus a shared-element morph for the story
+ * cover (card → story hero) named "story-cover". */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.3s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::view-transition-group(story-cover) {
+  animation-duration: 0.5s;
+  animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+::view-transition-old(story-cover),
+::view-transition-new(story-cover) {
+  height: 100%;
+  object-fit: cover;
+  overflow: clip;
+}

@@ -1,0 +1,12 @@
+/* @import "tailwindcss"; */
+@import "uniwind";
+@import "heroui-native/styles"; /* heroui import should be before the zenncore tailwind import to work properly */
+@import "@zenncore/config/tailwind";
+
+/* Path to the heroui-native lib inside node_modules */
+@source "../../../node_modules/heroui-native/lib";
+@source "../../components";
+
+@theme {
+  --color-mobile: red;
+}
