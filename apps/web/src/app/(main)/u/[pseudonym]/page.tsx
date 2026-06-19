@@ -57,7 +57,6 @@ export default async ({ params }: Params) => {
     <main>
       <script
         type="application/ld+json"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD structured data
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(
             createPersonSchema({ pseudonym, bio: user.bio ?? "" }),

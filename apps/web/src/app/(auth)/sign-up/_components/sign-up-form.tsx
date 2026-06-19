@@ -67,7 +67,9 @@ export const SignUpForm = () => {
   return (
     <InferredForm config={config} onSubmit={submit}>
       {error ? (
-        <p className="font-subtitle text-error text-sm">{error}</p>
+        <p className="rounded-md border border-error/30 bg-error/10 px-3 py-2 font-subtitle text-error text-sm">
+          {error}
+        </p>
       ) : null}
       <Button
         type="submit"

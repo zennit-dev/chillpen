@@ -157,3 +157,20 @@ export namespace createBreadcrumbSchema {
     path: string;
   };
 }
+
+export const createFaqSchema = (items: readonly createFaqSchema.Item[]) => ({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: items.map((item) => ({
+    "@type": "Question",
+    name: item.question,
+    acceptedAnswer: { "@type": "Answer", text: item.answer },
+  })),
+});
+
+export namespace createFaqSchema {
+  export type Item = {
+    question: string;
+    answer: string;
+  };
+}

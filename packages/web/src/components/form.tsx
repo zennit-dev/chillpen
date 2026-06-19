@@ -132,7 +132,7 @@ export const FieldLabel = ({
   return (
     <FieldPrimitive.Label
       className={createClassName(
-        "font-medium text-gray-900 text-sm",
+        "font-medium text-foreground text-sm",
         className,
       )}
       {...props}
@@ -151,7 +151,7 @@ export const FieldControl = ({
   return (
     <FieldPrimitive.Control
       className={createClassName(
-        "h-10 w-full rounded-md border border-gray-200 pl-3.5 text-base text-gray-900 focus:outline focus:outline-blue-800 focus:-outline-offset-1",
+        "h-10 w-full rounded-md border border-accent-foreground bg-white/[0.02] pl-3.5 text-base text-foreground transition-colors placeholder:text-foreground-dimmed/40 focus:border-primary/45 focus:outline-0",
         className,
       )}
       {...props}

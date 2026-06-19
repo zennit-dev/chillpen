@@ -1,6 +1,12 @@
 import { resultify } from "@zenncore/utils";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionPanel,
+  AccordionTrigger,
+} from "@zenncore/web/components/accordion";
 import { CheckIcon } from "@/components/icons";
-import { createMetadata } from "@/lib/seo";
+import { createFaqSchema, createMetadata } from "@/lib/seo";
 import * as Authentication from "@/server/app/authentication";
 import { Environment } from "@/server/utils/environment";
 import { SubscribeButton } from "./_components/subscribe-button";
@@ -19,6 +25,34 @@ const perks = [
   "Earn coins, win cosmetics, and build your reputation",
 ] as const;
 
+const faqs = [
+  {
+    question: "Is writing free?",
+    answer:
+      "Always. Writing chapters, branching universes, and earning coins is free forever. The €8/month is only for unlimited reading.",
+  },
+  {
+    question: "What's in the free trial?",
+    answer:
+      "Thirty days of unlimited reading across every living universe — every branch, every timeline. You're not charged until it ends.",
+  },
+  {
+    question: "Can I cancel anytime?",
+    answer:
+      "Yes, from your dashboard. You keep full access until the end of your billing period.",
+  },
+  {
+    question: "How do writers earn?",
+    answer:
+      "Approved chapters, reader engagement, likes, and challenge wins all earn coins you spend on cosmetics in the Avatar Studio.",
+  },
+  {
+    question: "Do I need to subscribe to read?",
+    answer:
+      "You can browse and sample freely. Reading the full catalog and saving paths needs an active trial or subscription.",
+  },
+] as const;
+
 export default async () => {
   const proxied = await resultify(() =>
     Authentication.getProxiedCurrentUser(Environment.SERVER),
@@ -27,6 +61,12 @@ export default async () => {
 
   return (
     <main className="px-4 pt-32 pb-24 sm:px-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(createFaqSchema(faqs)),
+        }}
+      />
       <div className="mx-auto max-w-md text-center">
         <p className="font-subtitle text-2xs text-primary uppercase tracking-[0.2em]">
           Membership
@@ -38,7 +78,7 @@ export default async () => {
           Writing is always free. Readers get a 30-day trial, then €8/month.
         </p>
 
-        <div className="glass mt-10 rounded-2xl p-8 text-left">
+        <div className="mt-10 rounded-2xl border border-white/10 bg-background-rich p-8 text-left">
           <div className="flex items-baseline gap-1">
             <span className="font-display font-semibold text-5xl text-foreground">
               €8
@@ -66,6 +106,26 @@ export default async () => {
           </div>
         </div>
       </div>
+
+      <section className="mx-auto mt-20 max-w-2xl">
+        <h2 className="mb-6 text-center font-display font-semibold text-2xl text-foreground sm:text-3xl">
+          Questions
+        </h2>
+        <Accordion>
+          {faqs.map((faq) => (
+            <AccordionItem key={faq.question} className="border-white/8">
+              <AccordionTrigger className="py-4 font-display font-medium text-base text-foreground">
+                {faq.question}
+              </AccordionTrigger>
+              <AccordionPanel>
+                <p className="pb-4 font-body text-foreground-dimmed text-sm leading-relaxed">
+                  {faq.answer}
+                </p>
+              </AccordionPanel>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </section>
     </main>
   );
 };

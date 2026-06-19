@@ -147,7 +147,7 @@ export const TextField = ({
     render,
     props: mergeProps<"div">(elementProps, {
       className: cn(
-        "flex h-10 w-full items-center justify-between gap-2 overflow-hidden rounded-md border border-accent-foreground px-2",
+        "flex h-10 w-full items-center justify-between gap-2 overflow-hidden rounded-md border border-accent-foreground bg-white/[0.02] px-2 transition-colors focus-within:border-primary/45",
         disabled && "cursor-not-allowed opacity-50",
         resolveClassName(className, state),
       ),

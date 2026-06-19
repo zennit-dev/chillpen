@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import type * as Chapter from "@/server/app/chapter";
-import * as ChapterApp from "@/server/app/chapter";
+import * as Chapter from "@/server/app/chapter";
 import * as ReadPath from "@/server/app/read-path";
 import * as Universe from "@/server/app/universe";
 import { Environment } from "@/server/utils/environment";
@@ -19,7 +18,7 @@ export default async ({
 
   const root = universe.data.rootChapter;
   const fallback = root
-    ? await ChapterApp.continuations(Environment.SERVER, { chapter: root.id })
+    ? await Chapter.continuations(Environment.SERVER, { chapter: root.id })
     : null;
   const branches = fallback?.success ? fallback.data : [];
 

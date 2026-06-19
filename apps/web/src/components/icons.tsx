@@ -153,6 +153,20 @@ export const GhostIcon = (props: IconProps) => (
   </Glyph>
 );
 
+export const XLogoIcon = ({ className, ...props }: IconProps) => (
+  <Glyph className={cn("fill-current", className)} stroke="none" {...props}>
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817-5.967 6.817H1.683l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </Glyph>
+);
+
+export const InstagramIcon = (props: IconProps) => (
+  <Glyph {...props}>
+    <rect x="3" y="3" width="18" height="18" rx="5" />
+    <circle cx="12" cy="12" r="4" />
+    <path d="M17 6.5h.01" />
+  </Glyph>
+);
+
 export {
   ArrowRightIcon,
   CheckBadgeIcon,
