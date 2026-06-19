@@ -361,6 +361,21 @@ export const signUp = withContext(
       data: { "user.email": payload.email },
     });
 
+    // Without a real Resend key we never send a verification email, so
+    // better-auth returns a usable session — sign the user in directly instead
+    // of pointing them at an inbox that will never receive mail. Mirrors signIn.
+    const canSendVerificationEmail =
+      (process.env.RESEND_API_KEY ?? "").length > 20;
+
+    if (!canSendVerificationEmail) {
+      const jar = await cookies();
+      setUserCookie(jar, result.data.user as User.Type);
+      return {
+        success: true,
+        data: { message: "Account created. You're all set." },
+      };
+    }
+
     return {
       success: true,
       data: {

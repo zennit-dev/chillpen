@@ -10,7 +10,14 @@ import { db, schema } from "@/server/database";
  * verified account. Pseudonyms + the chillpen economy columns live on `user`
  * but are managed by repositories, not better-auth, so only the signup-time
  * fields are declared as `additionalFields`.
+ *
+ * Verification depends on a real Resend key: until one is configured we cannot
+ * deliver the verification email, so requiring it would lock everyone out of
+ * signup. We fall back to immediate sign-in and re-enable verification
+ * automatically once a real `RESEND_API_KEY` is present.
  */
+const canSendVerificationEmail = (process.env.RESEND_API_KEY ?? "").length > 20;
+
 export const auth = betterAuth({
   appName: "chillpen",
   secret: process.env.BETTER_AUTH_SECRET,
@@ -26,10 +33,10 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: true,
+    requireEmailVerification: canSendVerificationEmail,
   },
   emailVerification: {
-    sendOnSignUp: true,
+    sendOnSignUp: canSendVerificationEmail,
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, url }) => {
       await sendVerificationEmail({ to: user.email, verificationUrl: url });
