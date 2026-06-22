@@ -1,18 +1,6 @@
 "use client";
 
 import { cn } from "@zenncore/utils";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuIcon,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuPopup,
-  NavigationMenuPositioner,
-  NavigationMenuTrigger,
-  NavigationMenuViewport,
-} from "@zenncore/web/components/navigation-menu";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
@@ -21,6 +9,7 @@ import {
   BellIcon,
   BoltIcon,
   BookmarkIcon,
+  ChevronDownIcon,
   CoinIcon,
   CompassIcon,
   FireIcon,
@@ -108,11 +97,15 @@ const fallbackMeta: GenreMeta = {
 
 export const NavBar = ({ user, genres = [] }: NavBar.Props) => {
   const [open, setOpen] = useState(false);
+  const [genresOpen, setGenresOpen] = useState(false);
   const pathname = usePathname();
   const browseGenres = genres.length > 0 ? genres : fallbackGenres;
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: close mobile menu on navigation
-  useEffect(() => setOpen(false), [pathname]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: close menus on navigation
+  useEffect(() => {
+    setOpen(false);
+    setGenresOpen(false);
+  }, [pathname]);
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-white/8 border-b bg-background/72 backdrop-blur-xl">
@@ -133,77 +126,89 @@ export const NavBar = ({ user, genres = [] }: NavBar.Props) => {
             </NavLink>
           ))}
 
-          <NavigationMenu className="bg-transparent p-0 text-foreground">
-            <NavigationMenuList className="gap-1">
-              <NavigationMenuItem>
-                <NavigationMenuTrigger className="flex items-center gap-1 rounded-md bg-transparent px-2.5 py-1.5 font-medium font-subtitle text-foreground-dimmed text-sm transition hover:text-foreground data-popup-open:text-foreground">
-                  Genres
-                  <NavigationMenuIcon
-                    classList={{ icon: "size-3.5 stroke-current" }}
-                  />
-                </NavigationMenuTrigger>
-                <NavigationMenuContent className="p-0">
-                  <div className="w-[560px] p-2.5">
-                    <Link
-                      href="/discover"
-                      className="mb-1 flex items-center gap-3 rounded-lg p-3 no-underline transition hover:bg-white/5"
-                    >
-                      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                        <CompassIcon className="size-[18px]" />
+          <div className="relative">
+            <button
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={genresOpen}
+              onClick={() => setGenresOpen((current) => !current)}
+              className={cn(
+                "flex items-center gap-1 rounded-md px-2.5 py-1.5 font-medium font-subtitle text-sm transition-colors",
+                genresOpen
+                  ? "text-foreground"
+                  : "text-foreground-dimmed hover:text-foreground",
+              )}
+            >
+              Genres
+              <ChevronDownIcon
+                className={cn(
+                  "size-3.5 transition-transform",
+                  genresOpen && "rotate-180",
+                )}
+              />
+            </button>
+            {genresOpen ? (
+              <>
+                <button
+                  type="button"
+                  aria-label="Close"
+                  tabIndex={-1}
+                  onClick={() => setGenresOpen(false)}
+                  className="fixed inset-0 z-40 cursor-default"
+                />
+                <div className="absolute top-full left-0 z-50 mt-3 w-[560px] rounded-xl border border-white/10 bg-background-rich p-2.5 shadow-[0_28px_80px_-20px_rgba(0,0,0,0.85)]">
+                  <Link
+                    href="/discover"
+                    className="mb-1 flex items-center gap-3 rounded-lg p-3 no-underline transition hover:bg-white/5"
+                  >
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                      <CompassIcon className="size-[18px]" />
+                    </span>
+                    <span>
+                      <span className="block font-display font-medium text-foreground text-sm">
+                        All universes
                       </span>
-                      <span>
-                        <span className="block font-display font-medium text-foreground text-sm">
-                          All universes
-                        </span>
-                        <span className="block font-body text-foreground-dimmed text-xs">
-                          Every living world on chillpen
-                        </span>
+                      <span className="block font-body text-foreground-dimmed text-xs">
+                        Every living world on chillpen
                       </span>
-                    </Link>
-                    <div className="grid grid-cols-2 gap-1">
-                      {browseGenres.map((genre) => {
-                        const meta = genreMeta[genre.slug] ?? fallbackMeta;
-                        const Icon = meta.icon;
-                        const accent = genre.accent ?? "#e8b45a";
-                        return (
-                          <NavigationMenuLink
-                            key={genre.slug}
-                            render={
-                              <Link href={`/discover?genre=${genre.slug}`} />
-                            }
-                            className="flex items-start gap-3 rounded-lg p-3 no-underline transition hover:bg-white/5"
+                    </span>
+                  </Link>
+                  <div className="grid grid-cols-2 gap-1">
+                    {browseGenres.map((genre) => {
+                      const meta = genreMeta[genre.slug] ?? fallbackMeta;
+                      const Icon = meta.icon;
+                      const accent = genre.accent ?? "#e8b45a";
+                      return (
+                        <Link
+                          key={genre.slug}
+                          href={`/discover?genre=${genre.slug}`}
+                          className="flex items-start gap-3 rounded-lg p-3 no-underline transition hover:bg-white/5"
+                        >
+                          <span
+                            className="flex size-9 shrink-0 items-center justify-center rounded-lg"
+                            style={{
+                              backgroundColor: `${accent}1f`,
+                              color: accent,
+                            }}
                           >
-                            <span
-                              className="flex size-9 shrink-0 items-center justify-center rounded-lg"
-                              style={{
-                                backgroundColor: `${accent}1f`,
-                                color: accent,
-                              }}
-                            >
-                              <Icon className="size-[18px]" />
+                            <Icon className="size-[18px]" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block font-display font-medium text-foreground text-sm">
+                              {genre.name}
                             </span>
-                            <span className="min-w-0">
-                              <span className="block font-display font-medium text-foreground text-sm">
-                                {genre.name}
-                              </span>
-                              <span className="block font-body text-foreground-dimmed text-xs leading-snug">
-                                {meta.description}
-                              </span>
+                            <span className="block font-body text-foreground-dimmed text-xs leading-snug">
+                              {meta.description}
                             </span>
-                          </NavigationMenuLink>
-                        );
-                      })}
-                    </div>
+                          </span>
+                        </Link>
+                      );
+                    })}
                   </div>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-            </NavigationMenuList>
-            <NavigationMenuPositioner sideOffset={16} align="start">
-              <NavigationMenuPopup className="rounded-xl border border-white/10 bg-background-rich text-foreground shadow-[0_28px_80px_-20px_rgba(0,0,0,0.85)] outline-0">
-                <NavigationMenuViewport />
-              </NavigationMenuPopup>
-            </NavigationMenuPositioner>
-          </NavigationMenu>
+                </div>
+              </>
+            ) : null}
+          </div>
         </div>
 
         <div className="ml-auto flex items-center gap-2">
