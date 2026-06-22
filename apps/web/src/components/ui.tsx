@@ -10,12 +10,14 @@ import type { ComponentProps, ReactNode } from "react";
 export const Logo = ({ className }: Logo.Props) => (
   <Link
     href="/"
-    className={cn(
-      "font-display font-semibold text-foreground text-xl tracking-tight",
-      className,
-    )}
+    aria-label="chillpen.club"
+    className={cn("inline-flex items-center gap-2", className)}
   >
-    chill<span className="text-primary">pen</span>
+    {/* biome-ignore lint/performance/noImgElement: small static SVG brand mark — nothing to optimize, and next/image rejects raw SVGs by default */}
+    <img src="/logo.svg" alt="" width={28} height={28} className="size-7 shrink-0" />
+    <span className="font-display font-semibold text-foreground text-lg tracking-tight">
+      chillpen<span className="text-foreground-dimmed">.club</span>
+    </span>
   </Link>
 );
 
