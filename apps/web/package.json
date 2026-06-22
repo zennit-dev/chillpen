@@ -15,6 +15,7 @@
   "dependencies": {
     "@ai-sdk/rsc": "^1.0.0",
     "@hookform/resolvers": "catalog:",
+    "@next/env": "^16.2.9",
     "@react-email/components": "^0.5.1",
     "@react-email/render": "^1.4.0",
     "@sentry/nextjs": "^9.42.0",

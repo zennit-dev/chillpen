@@ -1,6 +1,13 @@
+import { loadEnvConfig } from "@next/env";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { relations, tables } from "./schema";
+
+// Standalone scripts (e.g. `bun run seed`) run via tsx — outside Next — so
+// `.env*` files are NOT auto-loaded and `DATABASE_URL` would be empty, making
+// postgres.js fall back to libpq defaults (it connects to a DB named after the
+// OS user). Inside Next the variable is already set, so this is a no-op.
+if (!process.env.DATABASE_URL) loadEnvConfig(process.cwd(), false);
 
 const schema = { ...tables, ...relations };
 
