@@ -2,7 +2,9 @@ import { render } from "@react-email/render";
 import { Resend } from "resend";
 import { VerifyEmail } from "@/public/templates/verify";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Constructed lazily — `new Resend(undefined)` throws, which would crash any
+// module that imports this at build time when no key is configured.
+const createResend = () => new Resend(process.env.RESEND_API_KEY);
 
 /**
  * Sends the verification email. Do not await in the caller to avoid timing attacks.
@@ -14,6 +16,7 @@ export const sendVerificationEmail = async ({
   to: string;
   verificationUrl: string;
 }) => {
+  const resend = createResend();
   const html = await render(
     VerifyEmail({
       verificationUrl,

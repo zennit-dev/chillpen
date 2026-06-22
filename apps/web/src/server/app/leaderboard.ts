@@ -32,6 +32,94 @@ export const bySnapshot = withContext(
   "Leaderboard.bySnapshot",
 );
 
+export type WriterStanding = {
+  user: string;
+  pseudonym: string;
+  rank: number;
+  score: number;
+  reads: number;
+  forks: number;
+  likes: number;
+  universes: number;
+  image: string | null;
+  badges: string[];
+};
+
+/**
+ * The Writer Leaderboard — authors ranked by reader love (reads + forks×3 +
+ * likes×2), with per-writer aggregates for the ranked list. Optionally filtered
+ * to a single genre.
+ */
+export const topWriters = withContext(
+  async (_, { size = 25, genre }: { size?: number; genre?: string } = {}) => {
+    const universes = await Universe.find(Environment.SERVER, {
+      where: eq(schema.universe.status, "published"),
+      limit: 300,
+    });
+    if (!universes.success) return universes;
+
+    const pool = genre
+      ? universes.data.filter((universe) => universe.genres.includes(genre))
+      : universes.data;
+
+    const authorIds = unique(
+      pool.map((universe) => universe.originatingAuthorId),
+    );
+    const aggregates = Object.fromEntries(
+      authorIds.map((id) => {
+        const owned = pool.filter(
+          (universe) => universe.originatingAuthorId === id,
+        );
+        const reads = owned.reduce((sum, entry) => sum + entry.readCount, 0);
+        const forks = owned.reduce((sum, entry) => sum + entry.forkCount, 0);
+        const likes = owned.reduce((sum, entry) => sum + entry.likeCount, 0);
+        return [
+          id,
+          {
+            reads,
+            forks,
+            likes,
+            universes: owned.length,
+            score: reads + forks * 3 + likes * 2,
+          },
+        ];
+      }),
+    );
+
+    const authors =
+      authorIds.length > 0
+        ? await User.find(Environment.SERVER, {
+            where: inArray(schema.user.id, authorIds),
+          })
+        : { success: true as const, data: [] as User.Type[] };
+    if (!authors.success) return authors;
+
+    const ranked = authors.data
+      .map((author) => {
+        const totals = aggregates[author.id] ?? {
+          reads: 0,
+          forks: 0,
+          likes: 0,
+          universes: 0,
+          score: 0,
+        };
+        return {
+          user: author.id,
+          pseudonym: author.pseudonym ?? author.name,
+          image: author.image,
+          badges: author.badges,
+          ...totals,
+        };
+      })
+      .sort((first, second) => second.score - first.score)
+      .slice(0, size)
+      .map((entry, index): WriterStanding => ({ ...entry, rank: index + 1 }));
+
+    return { success: true as const, data: ranked };
+  },
+  "Leaderboard.topWriters",
+);
+
 /** Live "rising writers" — authors ranked by recent read/fork/like velocity. */
 export const risingWriters = withContext(
   async (_, { size = 10 }: { size?: number } = {}) => {

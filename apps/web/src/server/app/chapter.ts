@@ -190,6 +190,20 @@ export const drafts = withAuthentication(
   "Chapter.drafts",
 );
 
+/** Approved chapters a writer has authored — for their public profile. */
+export const byAuthorApproved = withContext(
+  async (_, { author, limit = 12 }: { author: string; limit?: number }) =>
+    find(Environment.SERVER, {
+      where: and(
+        eq(schema.chapter.authorId, author),
+        eq(schema.chapter.status, "approved"),
+      ),
+      orderBy: [{ column: schema.chapter.readCount, direction: "desc" }],
+      limit,
+    }),
+  "Chapter.byAuthorApproved",
+);
+
 export const fork = withAuthentication(
   async (
     context,
@@ -483,6 +497,48 @@ export const consistencyCheck = withAuthentication(
     };
   },
   "Chapter.consistencyCheck",
+);
+
+/**
+ * Run the continuity check on an unsaved draft body against a parent's
+ * ancestry. Powers the Writer Studio "Run consistency check" before the chapter
+ * exists. Returns [] (never errors out the UI) when there's nothing to compare.
+ */
+export const consistencyPreview = withAuthentication(
+  async (_, input: { parent?: string; body: string }) => {
+    if (!input.parent || input.body.trim().length === 0)
+      return { success: true as const, data: [] as ContinuityFlag[] };
+
+    const ancestors = await ancestry(input.parent);
+    if (ancestors.length === 0)
+      return { success: true as const, data: [] as ContinuityFlag[] };
+
+    const result = await resultify(() =>
+      generate({
+        system:
+          "You are a story-continuity checker. Flag contradictions (deaths, locations, timeline, named entities, tone) between the NEW chapter and its ancestor chapters. Be concise.",
+        prompt: `Ancestor chapters:\n${ancestors
+          .map((entry) => entry.body)
+          .join("\n---\n")}\n\nNew chapter:\n${input.body}`,
+        schema: z.object({
+          flags: z.array(
+            z.object({
+              kind: z.enum(["death", "location", "timeline", "entity", "tone"]),
+              message: z.string(),
+            }),
+          ),
+        }),
+      }),
+    );
+
+    if (!result.success)
+      return { success: true as const, data: [] as ContinuityFlag[] };
+    return {
+      success: true as const,
+      data: result.data.flags as ContinuityFlag[],
+    };
+  },
+  "Chapter.consistencyPreview",
 );
 
 export const generateSummary = withAuthentication(

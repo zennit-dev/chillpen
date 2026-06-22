@@ -37,7 +37,7 @@ export const SignInForm = () => {
         setError("That email and password don't match.");
         return;
       }
-      router.push("/me");
+      router.push("/discover");
     },
   );
 

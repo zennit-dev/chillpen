@@ -29,10 +29,7 @@ export const StoryCover = ({ slug, cover, title, genre }: StoryCover.Props) => {
       onClick={open}
       className="block overflow-hidden rounded-t-md"
     >
-      <div
-        ref={frame}
-        className="relative aspect-[16/10] overflow-hidden"
-      >
+      <div ref={frame} className="relative aspect-[16/10] overflow-hidden">
         <Image
           src={cover}
           alt={title}

@@ -79,12 +79,14 @@ const userId = (key: string) => `usr_${key}`;
 const GENRES = [
   { slug: "sci-fi", name: "Sci-Fi", accent: "#60a5fa" },
   { slug: "fantasy", name: "Fantasy", accent: "#a855f7" },
+  { slug: "thriller", name: "Thriller", accent: "#f97316" },
   { slug: "horror", name: "Horror", accent: "#ef4444" },
   { slug: "romance", name: "Romance", accent: "#ec4899" },
   { slug: "mystery", name: "Mystery", accent: "#22d3ee" },
-  { slug: "cyberpunk", name: "Cyberpunk", accent: "#e8b45a" },
-  { slug: "thriller", name: "Thriller", accent: "#f97316" },
+  { slug: "historical", name: "Historical", accent: "#d4a373" },
   { slug: "literary", name: "Literary", accent: "#94a3b8" },
+  { slug: "satire", name: "Satire", accent: "#e8b45a" },
+  { slug: "drama", name: "Drama", accent: "#f472b6" },
 ] as const;
 
 const genreId = (slug: string) => `gnr_${slug}`;
@@ -289,7 +291,7 @@ const UNIVERSES: UniverseSeed[] = [
     description:
       "In a rain-drowned megacity, a black-market neurosurgeon realizes her patients are all dreaming the same garden — and it's growing.",
     author: "neon",
-    genres: ["cyberpunk", "thriller"],
+    genres: ["thriller", "sci-fi"],
     rating: 47,
     featuredOrder: 2,
     root: {
@@ -608,6 +610,34 @@ const seed = async () => {
     .values([
       { id: "flw_1", followerId: reader, followingId: userId("luna") },
       { id: "flw_2", followerId: reader, followingId: userId("neon") },
+    ])
+    .onConflictDoNothing();
+
+  // profile comments / congratulations
+  await db
+    .insert(schema.comment)
+    .values([
+      {
+        id: "cmt_1",
+        targetType: "profile",
+        targetId: userId("luna"),
+        authorId: reader,
+        body: "Your branch on Dusthollow wrecked me. The blue cup — come on. More.",
+      },
+      {
+        id: "cmt_2",
+        targetType: "profile",
+        targetId: userId("luna"),
+        authorId: userId("neon"),
+        body: "Master of the open door. You always leave room for the rest of us to play.",
+      },
+      {
+        id: "cmt_3",
+        targetType: "profile",
+        targetId: userId("neon"),
+        authorId: reader,
+        body: "Signal Bloom is the best thing on here. Tipping you, obviously.",
+      },
     ])
     .onConflictDoNothing();
 

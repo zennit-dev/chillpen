@@ -158,6 +158,7 @@ export const universe = pgTable(
     description: text("description"),
     cover: text("cover"),
     genres: jsonb("genres").$type<string[]>().notNull().default([]),
+    tags: jsonb("tags").$type<string[]>().notNull().default([]),
     originatingAuthorId: text("originatingAuthorId")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -377,6 +378,26 @@ export const follow = pgTable(
   (table) => [
     uniqueIndex("follow_pair_idx").on(table.followerId, table.followingId),
     index("follow_following_idx").on(table.followingId),
+  ],
+);
+
+export const comment = pgTable(
+  "comment",
+  {
+    id: text("id").primaryKey().default(sql`gen_random_uuid()::text`),
+    // what's being commented on: a writer profile or a chapter.
+    targetType: text("targetType").notNull(),
+    targetId: text("targetId").notNull(),
+    authorId: text("authorId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date" }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("comment_target_idx").on(table.targetType, table.targetId),
+    index("comment_author_idx").on(table.authorId),
   ],
 );
 
@@ -606,6 +627,7 @@ export const tables = {
   userCosmetic,
   chapterLike,
   follow,
+  comment,
   challenge,
   leaderboardSnapshot,
   abuseReport,

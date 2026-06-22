@@ -81,26 +81,34 @@ export namespace Stat {
 
 export const SectionHeader = ({
   title,
+  eyebrow,
   href,
   action,
   className,
 }: SectionHeader.Props) => (
   <div className={cn("flex items-end justify-between gap-4", className)}>
-    {href ? (
-      <Link
-        href={href}
-        className="group inline-flex items-center gap-1.5 font-display font-medium text-foreground-rich text-lg transition-colors hover:text-foreground sm:text-xl"
-      >
-        {title}
-        <span className="text-primary opacity-0 transition-opacity group-hover:opacity-100">
-          ›
-        </span>
-      </Link>
-    ) : (
-      <h2 className="font-display font-medium text-foreground-rich text-lg sm:text-xl">
-        {title}
-      </h2>
-    )}
+    <div className="min-w-0">
+      {eyebrow ? (
+        <p className="mb-1 font-medium font-subtitle text-[0.625rem] text-foreground-dimmed uppercase tracking-[0.18em]">
+          {eyebrow}
+        </p>
+      ) : null}
+      {href ? (
+        <Link
+          href={href}
+          className="group inline-flex items-center gap-1.5 font-display font-medium text-foreground-rich text-lg transition-colors hover:text-foreground sm:text-xl"
+        >
+          {title}
+          <span className="text-primary opacity-0 transition-opacity group-hover:opacity-100">
+            ›
+          </span>
+        </Link>
+      ) : (
+        <h2 className="font-display font-medium text-foreground-rich text-lg sm:text-xl">
+          {title}
+        </h2>
+      )}
+    </div>
     {action}
   </div>
 );
@@ -108,6 +116,7 @@ export const SectionHeader = ({
 export namespace SectionHeader {
   export type Props = {
     title: string;
+    eyebrow?: string;
     href?: string;
     action?: ReactNode;
     className?: string;

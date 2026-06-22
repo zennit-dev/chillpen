@@ -33,17 +33,6 @@ const setUserCookie = (
     },
   );
 
-const parseName = (fullName: string): { name: string; surname: string } => {
-  const trimmed = fullName.trim();
-  const spaceIndex = trimmed.indexOf(" ");
-
-  if (spaceIndex === -1) return { name: trimmed, surname: trimmed };
-  return {
-    name: trimmed.slice(0, spaceIndex),
-    surname: trimmed.slice(spaceIndex + 1).trim() || trimmed,
-  };
-};
-
 export const signInWithShopify = withContext(
   async (
     context,
@@ -315,40 +304,46 @@ export const doesEmailExist = withContext(
   "Authentication.getDoesEmailExist",
 );
 
+const TRIAL_MS = 30 * 24 * 60 * 60 * 1000;
+
 export const signUp = withContext(
   async (
     context,
     payload: {
+      pseudonym: string;
       email: string;
       password: string;
-      fullName: string;
-      company?: string;
-      jobTitle?: string;
-      source?: string;
     },
   ) => {
-    const { name, surname } = parseName(payload.fullName);
+    // Pseudonyms are the identity (APP.md §5.6) — claim it up front and reject
+    // collisions before creating the account.
+    const taken = await User.find(Environment.SERVER, {
+      where: eq(schema.user.pseudonym, payload.pseudonym),
+      limit: 1,
+    });
+    if (taken.success && taken.data[0])
+      return {
+        success: false as const,
+        error: new InvalidCredentialsError("That pseudonym is already taken"),
+      };
 
     const result = await resultify(
       async () =>
         await context.auth.signUpEmail({
           body: {
-            name,
-            surname,
+            name: payload.pseudonym,
+            surname: payload.pseudonym,
             email: payload.email,
             password: payload.password,
             callbackURL: `${process.env.APP_HOST}/verify/success`,
             role: "user",
-            jobTitle: payload.jobTitle,
-            company: payload.company,
-            source: payload.source,
           },
         }),
     );
 
     if (!result.success) {
       return {
-        success: false,
+        success: false as const,
         error: new InvalidCredentialsError(
           result.error?.message ?? "Sign up failed",
           { cause: result.error },
@@ -361,28 +356,32 @@ export const signUp = withContext(
       data: { "user.email": payload.email },
     });
 
+    // Set the pseudonym + open the 30-day reading trial on the fresh account.
+    await User.update(Environment.SERVER, result.data.user.id, {
+      pseudonym: payload.pseudonym,
+      subscriptionStatus: "trial",
+      trialEndsAt: new Date(Date.now() + TRIAL_MS),
+    });
+
     // Without a real Resend key we never send a verification email, so
-    // better-auth returns a usable session — sign the user in directly instead
-    // of pointing them at an inbox that will never receive mail. Mirrors signIn.
+    // better-auth returns a usable session — sign the user in directly so they
+    // can continue to the payment step. Mirrors signIn.
     const canSendVerificationEmail =
       (process.env.RESEND_API_KEY ?? "").length > 20;
 
     if (!canSendVerificationEmail) {
       const jar = await cookies();
-      setUserCookie(jar, result.data.user as User.Type);
-      return {
-        success: true,
-        data: { message: "Account created. You're all set." },
-      };
+      const fresh = await User.get(Environment.SERVER, result.data.user.id);
+      setUserCookie(
+        jar,
+        fresh.success && fresh.data
+          ? fresh.data
+          : (result.data.user as User.Type),
+      );
+      return { success: true as const, data: { verified: true } };
     }
 
-    return {
-      success: true,
-      data: {
-        message:
-          "Account created. Please check your email to verify your address.",
-      },
-    };
+    return { success: true as const, data: { verified: false } };
   },
   "Authentication.signUp",
 );
@@ -396,7 +395,9 @@ export const verifyEmail = withContext(async (_context, token: string) => {
   };
 }, "Authentication.verifyEmail");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Constructed lazily — `new Resend(undefined)` throws at import when no key is
+// configured, which would crash the build during page-data collection.
+const createResend = () => new Resend(process.env.RESEND_API_KEY);
 
 /**
  * Sends the verification email. Do not await in the caller to avoid timing attacks.
@@ -408,6 +409,7 @@ export const sendVerificationEmail = async ({
   to: string;
   verificationUrl: string;
 }) => {
+  const resend = createResend();
   const html = await render(
     VerifyEmail({
       verificationUrl,

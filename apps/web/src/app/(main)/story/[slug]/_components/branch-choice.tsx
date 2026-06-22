@@ -77,7 +77,7 @@ export const BranchChoice = ({
       )}
 
       <a
-        href={`/write?parent=${chapter}`}
+        href={`/write?universe=${universe}&parent=${chapter}`}
         className="mt-3 flex items-center justify-center gap-2 rounded-[6px] border border-white/8 bg-transparent p-3.5 font-medium text-foreground-dimmed text-sm transition hover:border-primary/40 hover:text-primary"
       >
         <PenIcon className="size-4" />

@@ -87,6 +87,45 @@ export const spend = withAuthentication(
   "Coin.spend",
 );
 
+/**
+ * Tip a writer directly. Moves coins from the reader to the writer atomically
+ * and records both ledger sides. Readers tip from a writer's profile.
+ */
+export const tip = withAuthentication(
+  async (context, input: { to: string; amount: number }) => {
+    const amount = Math.floor(Math.abs(input.amount));
+    if (amount <= 0)
+      return { success: false as const, error: new Error("invalid-amount") };
+    if (input.to === context.session.user.id)
+      return { success: false as const, error: new Error("cannot-tip-self") };
+
+    return withTransaction(async (tx: TransactionScope) => {
+      const debit = await award(Environment.SERVER, {
+        user: context.session.user.id,
+        delta: -amount,
+        reason: "tip_sent",
+        referenceType: "user",
+        referenceId: input.to,
+        tx,
+      });
+      if (!debit.success) return debit;
+
+      const credit = await award(Environment.SERVER, {
+        user: input.to,
+        delta: amount,
+        reason: "tip_received",
+        referenceType: "user",
+        referenceId: context.session.user.id,
+        tx,
+      });
+      if (!credit.success) return credit;
+
+      return { success: true as const, data: { amount } };
+    });
+  },
+  "Coin.tip",
+);
+
 export const balance = withAuthentication(async (context) => {
   const account = await User.get(Environment.SERVER, context.session.user.id);
   if (!account.success) return account;

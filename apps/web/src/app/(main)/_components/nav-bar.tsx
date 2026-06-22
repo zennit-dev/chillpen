@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import {
   BellIcon,
   BoltIcon,
+  BookmarkIcon,
   CoinIcon,
   CompassIcon,
   FireIcon,
@@ -48,8 +49,10 @@ export type NavGenre = {
 };
 
 const links = [
-  { href: "/leaderboards", label: "Leaderboards" },
-  { href: "/challenges", label: "Challenges" },
+  { href: "/discover", label: "Discover" },
+  { href: "/library", label: "Library" },
+  { href: "/write", label: "Writer Studio" },
+  { href: "/leaderboards", label: "Leaderboard" },
 ] as const;
 
 type GenreMeta = {
@@ -58,15 +61,45 @@ type GenreMeta = {
 };
 
 const genreMeta: Record<string, GenreMeta> = {
-  "sci-fi": { icon: SparkleIcon, description: "Futures, machines, and the edge of possibility" },
+  "sci-fi": {
+    icon: SparkleIcon,
+    description: "Futures, machines, and the edge of possibility",
+  },
   fantasy: { icon: StarIcon, description: "Magic, myth, and worlds unbound" },
+  thriller: {
+    icon: FireIcon,
+    description: "Pulse-pounding, page-turning tension",
+  },
   horror: { icon: GhostIcon, description: "Dread that follows you home" },
   romance: { icon: HeartIcon, description: "Hearts on the line" },
-  mystery: { icon: CompassIcon, description: "Clues, twists, and the truth beneath" },
-  cyberpunk: { icon: BoltIcon, description: "Neon, rain, and machine dreams" },
-  thriller: { icon: FireIcon, description: "Pulse-pounding, page-turning tension" },
+  mystery: {
+    icon: CompassIcon,
+    description: "Clues, twists, and the truth beneath",
+  },
+  historical: {
+    icon: BookmarkIcon,
+    description: "The past, vividly reimagined",
+  },
   literary: { icon: PenIcon, description: "Quiet, human, beautifully written" },
+  satire: { icon: BoltIcon, description: "Sharp, funny, and unafraid" },
+  drama: { icon: HeartIcon, description: "High stakes, deep feeling" },
+  cyberpunk: { icon: BoltIcon, description: "Neon, rain, and machine dreams" },
 };
+
+// Canonical browse order — used as a fallback when the catalog has no genres
+// loaded yet (e.g. servers asleep in preview).
+const fallbackGenres: NavGenre[] = [
+  { slug: "sci-fi", name: "Sci-Fi", accent: "#60a5fa" },
+  { slug: "fantasy", name: "Fantasy", accent: "#a855f7" },
+  { slug: "thriller", name: "Thriller", accent: "#f97316" },
+  { slug: "horror", name: "Horror", accent: "#ef4444" },
+  { slug: "romance", name: "Romance", accent: "#ec4899" },
+  { slug: "mystery", name: "Mystery", accent: "#22d3ee" },
+  { slug: "historical", name: "Historical", accent: "#d4a373" },
+  { slug: "literary", name: "Literary", accent: "#94a3b8" },
+  { slug: "satire", name: "Satire", accent: "#e8b45a" },
+  { slug: "drama", name: "Drama", accent: "#f472b6" },
+];
 
 const fallbackMeta: GenreMeta = {
   icon: SparkleIcon,
@@ -76,6 +109,7 @@ const fallbackMeta: GenreMeta = {
 export const NavBar = ({ user, genres = [] }: NavBar.Props) => {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const browseGenres = genres.length > 0 ? genres : fallbackGenres;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: close mobile menu on navigation
   useEffect(() => setOpen(false), [pathname]);
@@ -84,48 +118,82 @@ export const NavBar = ({ user, genres = [] }: NavBar.Props) => {
     <header className="fixed inset-x-0 top-0 z-50 border-white/8 border-b bg-background/72 backdrop-blur-xl">
       <nav className="mx-auto flex h-[68px] max-w-7xl items-center gap-5 px-4 sm:px-6">
         <Logo />
-        <div className="hidden items-center gap-4 md:flex">
+        <div className="hidden items-center gap-1 md:flex">
+          {links.map((link) => (
+            <NavLink
+              key={link.href}
+              href={link.href}
+              active={
+                link.href === "/discover"
+                  ? pathname === "/discover"
+                  : pathname.startsWith(link.href)
+              }
+            >
+              {link.label}
+            </NavLink>
+          ))}
+
           <NavigationMenu className="bg-transparent p-0 text-foreground">
             <NavigationMenuList className="gap-1">
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="flex items-center gap-1 rounded-md bg-transparent px-2 py-1.5 font-medium font-subtitle text-foreground-dimmed text-sm transition hover:text-foreground data-popup-open:text-foreground">
-                  Discover
+                <NavigationMenuTrigger className="flex items-center gap-1 rounded-md bg-transparent px-2.5 py-1.5 font-medium font-subtitle text-foreground-dimmed text-sm transition hover:text-foreground data-popup-open:text-foreground">
+                  Genres
                   <NavigationMenuIcon
                     classList={{ icon: "size-3.5 stroke-current" }}
                   />
                 </NavigationMenuTrigger>
                 <NavigationMenuContent className="p-0">
-                  <div className="grid w-[560px] grid-cols-2 gap-1 p-2.5">
-                    {genres.map((genre) => {
-                      const meta = genreMeta[genre.slug] ?? fallbackMeta;
-                      const Icon = meta.icon;
-                      const accent = genre.accent ?? "#e8b45a";
-                      return (
-                        <NavigationMenuLink
-                          key={genre.slug}
-                          render={<Link href={`/discover?genre=${genre.slug}`} />}
-                          className="flex items-start gap-3 rounded-lg p-3 no-underline transition hover:bg-white/5"
-                        >
-                          <span
-                            className="flex size-9 shrink-0 items-center justify-center rounded-lg"
-                            style={{
-                              backgroundColor: `${accent}1f`,
-                              color: accent,
-                            }}
+                  <div className="w-[560px] p-2.5">
+                    <Link
+                      href="/discover"
+                      className="mb-1 flex items-center gap-3 rounded-lg p-3 no-underline transition hover:bg-white/5"
+                    >
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                        <CompassIcon className="size-[18px]" />
+                      </span>
+                      <span>
+                        <span className="block font-display font-medium text-foreground text-sm">
+                          All universes
+                        </span>
+                        <span className="block font-body text-foreground-dimmed text-xs">
+                          Every living world on chillpen
+                        </span>
+                      </span>
+                    </Link>
+                    <div className="grid grid-cols-2 gap-1">
+                      {browseGenres.map((genre) => {
+                        const meta = genreMeta[genre.slug] ?? fallbackMeta;
+                        const Icon = meta.icon;
+                        const accent = genre.accent ?? "#e8b45a";
+                        return (
+                          <NavigationMenuLink
+                            key={genre.slug}
+                            render={
+                              <Link href={`/discover?genre=${genre.slug}`} />
+                            }
+                            className="flex items-start gap-3 rounded-lg p-3 no-underline transition hover:bg-white/5"
                           >
-                            <Icon className="size-[18px]" />
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block font-display font-medium text-foreground text-sm">
-                              {genre.name}
+                            <span
+                              className="flex size-9 shrink-0 items-center justify-center rounded-lg"
+                              style={{
+                                backgroundColor: `${accent}1f`,
+                                color: accent,
+                              }}
+                            >
+                              <Icon className="size-[18px]" />
                             </span>
-                            <span className="block font-body text-foreground-dimmed text-xs leading-snug">
-                              {meta.description}
+                            <span className="min-w-0">
+                              <span className="block font-display font-medium text-foreground text-sm">
+                                {genre.name}
+                              </span>
+                              <span className="block font-body text-foreground-dimmed text-xs leading-snug">
+                                {meta.description}
+                              </span>
                             </span>
-                          </span>
-                        </NavigationMenuLink>
-                      );
-                    })}
+                          </NavigationMenuLink>
+                        );
+                      })}
+                    </div>
                   </div>
                 </NavigationMenuContent>
               </NavigationMenuItem>
@@ -136,29 +204,12 @@ export const NavBar = ({ user, genres = [] }: NavBar.Props) => {
               </NavigationMenuPopup>
             </NavigationMenuPositioner>
           </NavigationMenu>
-
-          {links.map((link) => (
-            <NavLink
-              key={link.href}
-              href={link.href}
-              active={pathname.startsWith(link.href)}
-            >
-              {link.label}
-            </NavLink>
-          ))}
         </div>
 
         <div className="ml-auto flex items-center gap-2">
           <IconLink href="/search" label="Search">
             <SearchIcon className="size-5" />
           </IconLink>
-          <Link
-            href="/write"
-            className="hidden items-center gap-1.5 rounded-[4px] bg-primary px-3.5 py-2 font-medium text-primary-foreground text-sm transition hover:bg-primary-rich sm:inline-flex"
-          >
-            <PenIcon className="size-4" />
-            Create
-          </Link>
           {user ? (
             <>
               <IconLink href="/me" label="Notifications">
@@ -178,12 +229,20 @@ export const NavBar = ({ user, genres = [] }: NavBar.Props) => {
               </Link>
             </>
           ) : (
-            <Link
-              href="/sign-in"
-              className="rounded-[4px] border border-white/12 bg-white/5 px-3.5 py-2 font-medium text-foreground text-sm transition hover:border-primary/40"
-            >
-              Sign in
-            </Link>
+            <>
+              <Link
+                href="/sign-in"
+                className="hidden rounded-[4px] px-3 py-2 font-medium text-foreground-dimmed text-sm transition hover:text-foreground sm:inline-flex"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/sign-up"
+                className="rounded-[4px] bg-foreground px-3.5 py-2 font-medium text-background text-sm transition hover:bg-foreground/90"
+              >
+                Get started
+              </Link>
+            </>
           )}
           <button
             type="button"
@@ -202,34 +261,7 @@ export const NavBar = ({ user, genres = [] }: NavBar.Props) => {
 
       {open ? (
         <div className="max-h-[70vh] space-y-4 overflow-y-auto border-white/8 border-t bg-background-rich px-4 py-4 md:hidden">
-          <Link
-            href="/discover"
-            className="block font-medium text-foreground-rich text-sm"
-          >
-            Discover
-          </Link>
-          <div className="grid grid-cols-2 gap-1.5">
-            {genres.map((genre) => {
-              const meta = genreMeta[genre.slug] ?? fallbackMeta;
-              const Icon = meta.icon;
-              const accent = genre.accent ?? "#e8b45a";
-              return (
-                <Link
-                  key={genre.slug}
-                  href={`/discover?genre=${genre.slug}`}
-                  className="flex items-center gap-2 rounded-lg border border-white/8 px-2.5 py-2"
-                >
-                  <span style={{ color: accent }}>
-                    <Icon className="size-4" />
-                  </span>
-                  <span className="font-medium text-foreground text-xs">
-                    {genre.name}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-          <div className="flex flex-col gap-1 border-white/8 border-t pt-3">
+          <div className="flex flex-col gap-1">
             {links.map((link) => (
               <Link
                 key={link.href}
@@ -239,12 +271,32 @@ export const NavBar = ({ user, genres = [] }: NavBar.Props) => {
                 {link.label}
               </Link>
             ))}
-            <Link
-              href="/write"
-              className="rounded-md px-1 py-1.5 font-medium text-primary text-sm"
-            >
-              Create chapter
-            </Link>
+          </div>
+          <div className="border-white/8 border-t pt-3">
+            <p className="mb-2 font-medium font-subtitle text-2xs text-foreground-dimmed uppercase tracking-widest">
+              Genres
+            </p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {browseGenres.map((genre) => {
+                const meta = genreMeta[genre.slug] ?? fallbackMeta;
+                const Icon = meta.icon;
+                const accent = genre.accent ?? "#e8b45a";
+                return (
+                  <Link
+                    key={genre.slug}
+                    href={`/discover?genre=${genre.slug}`}
+                    className="flex items-center gap-2 rounded-lg border border-white/8 px-2.5 py-2"
+                  >
+                    <span style={{ color: accent }}>
+                      <Icon className="size-4" />
+                    </span>
+                    <span className="font-medium text-foreground text-xs">
+                      {genre.name}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         </div>
       ) : null}
@@ -271,9 +323,9 @@ const NavLink = ({
   <Link
     href={href}
     className={cn(
-      "font-medium font-subtitle text-sm transition-colors",
+      "rounded-md px-2.5 py-1.5 font-medium font-subtitle text-sm transition-colors",
       active
-        ? "text-foreground"
+        ? "bg-white/5 text-foreground"
         : "text-foreground-dimmed hover:text-foreground",
     )}
   >

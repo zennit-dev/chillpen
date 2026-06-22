@@ -146,7 +146,7 @@ export default async ({ params }: Params) => {
               className="glass inline-flex items-center gap-2 rounded-[4px] px-5 py-2.5 font-medium text-foreground text-sm transition hover:border-primary/40"
             >
               <PenIcon className="size-4" />
-              Create chapter
+              Add a branch
             </Link>
             <SaveButton universe={universe.id} className="size-10" />
           </div>

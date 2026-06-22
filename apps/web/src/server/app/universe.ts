@@ -278,7 +278,8 @@ export const createUniverse = withAuthentication(
       description?: string;
       cover?: string;
       genres: string[];
-      firstChapter: { title: string; body: string };
+      tags?: string[];
+      firstChapter: { title: string; body: string; summary?: string };
     },
   ) =>
     withTransaction(async (tx: TransactionScope) => {
@@ -290,6 +291,7 @@ export const createUniverse = withAuthentication(
           description: input.description,
           cover: input.cover,
           genres: input.genres,
+          tags: input.tags ?? [],
           originatingAuthorId: context.session.user.id,
         },
         { tx },
@@ -304,6 +306,7 @@ export const createUniverse = withAuthentication(
           authorId: context.session.user.id,
           title: input.firstChapter.title,
           body: input.firstChapter.body,
+          summary: input.firstChapter.summary,
           depth: 0,
           wordCount: input.firstChapter.body.trim().split(/\s+/).filter(Boolean)
             .length,

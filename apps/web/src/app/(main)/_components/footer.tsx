@@ -13,7 +13,8 @@ const columns = [
     title: "Explore",
     links: [
       { href: "/discover", label: "Discover" },
-      { href: "/leaderboards", label: "Leaderboards" },
+      { href: "/library", label: "Library" },
+      { href: "/leaderboards", label: "Leaderboard" },
       { href: "/challenges", label: "Challenges" },
     ],
   },
@@ -29,7 +30,7 @@ const columns = [
     title: "Account",
     links: [
       { href: "/me", label: "Dashboard" },
-      { href: "/me/saved", label: "Saved" },
+      { href: "/library", label: "Library" },
       { href: "/sign-in", label: "Sign in" },
     ],
   },
