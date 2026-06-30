@@ -1,7 +1,7 @@
 import { resultify } from "@zenncore/utils";
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Avatar } from "@/components/avatar";
 import { CoinIcon, PenIcon } from "@/components/icons";
 import { StoryCard } from "@/components/story-card";
 import { formatCount, SectionHeader } from "@/components/ui";
@@ -60,19 +60,12 @@ export default async () => {
         {/* profile header */}
         <header className="mb-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/8 bg-background-rich p-5 sm:p-6">
           <div className="flex items-center gap-4">
-            <span className="flex size-16 items-center justify-center overflow-hidden rounded-full bg-primary/15 font-display font-semibold text-2xl text-primary ring-2 ring-white/10">
-              {user.image ? (
-                <Image
-                  src={user.image}
-                  alt=""
-                  width={64}
-                  height={64}
-                  className="size-full object-cover"
-                />
-              ) : (
-                (user.pseudonym ?? user.name).charAt(0).toUpperCase()
-              )}
-            </span>
+            <Avatar
+              preset={user.avatarConfig?.preset}
+              image={user.image}
+              name={user.pseudonym ?? user.name}
+              className="size-16 text-2xl ring-2 ring-white/10"
+            />
             <div>
               <p className="font-subtitle text-2xs text-foreground-dimmed uppercase tracking-widest">
                 Welcome back

@@ -1,10 +1,12 @@
 "use client";
 
 import { cn } from "@zenncore/utils";
+import { useAsyncAction } from "@zenncore/utils/hooks";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
+import { Avatar } from "@/components/avatar";
 import {
   BellIcon,
   BoltIcon,
@@ -15,20 +17,26 @@ import {
   FireIcon,
   GhostIcon,
   HeartIcon,
+  HelpIcon,
   type IconProps,
+  LogoutIcon,
   MenuIcon,
   PenIcon,
   SearchIcon,
+  SlidersIcon,
   SparkleIcon,
   StarIcon,
   UserIcon,
   XIcon,
 } from "@/components/icons";
 import { Logo } from "@/components/ui";
+import * as Authentication from "@/server/app/authentication";
 
 export type NavUser = {
   pseudonym: string;
   coins: number;
+  avatar?: string | null;
+  image?: string | null;
 };
 
 export type NavGenre = {
@@ -220,18 +228,7 @@ export const NavBar = ({ user, genres = [] }: NavBar.Props) => {
               <IconLink href="/me" label="Notifications">
                 <BellIcon className="size-5" />
               </IconLink>
-              <Link
-                href="/me"
-                className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 py-1 pr-3 pl-1 transition hover:border-primary/30"
-              >
-                <span className="flex size-7 items-center justify-center rounded-full bg-primary/15 text-primary">
-                  <UserIcon className="size-4" />
-                </span>
-                <span className="inline-flex items-center gap-1 font-medium font-subtitle text-primary text-xs">
-                  <CoinIcon className="size-3.5" />
-                  {user.coins}
-                </span>
-              </Link>
+              <AccountMenu user={user} />
             </>
           ) : (
             <>
@@ -315,6 +312,112 @@ export namespace NavBar {
     genres: NavGenre[];
   };
 }
+
+const accountLinks = [
+  { href: "/me", label: "Dashboard", icon: UserIcon },
+  { href: "/library", label: "Library", icon: BookmarkIcon },
+  { href: "/me/avatar", label: "Avatar studio", icon: SparkleIcon },
+  { href: "/me/settings", label: "Account settings", icon: SlidersIcon },
+  { href: "/help", label: "Help", icon: HelpIcon },
+] as const;
+
+const AccountMenu = ({ user }: { user: NavUser }) => {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+
+  const [logout, isLoggingOut] = useAsyncAction(async () => {
+    await Authentication.signOut();
+    setOpen(false);
+    router.push("/");
+    router.refresh();
+  });
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 py-1 pr-2.5 pl-1 transition hover:border-primary/30"
+      >
+        <Avatar
+          preset={user.avatar}
+          image={user.image}
+          name={user.pseudonym}
+          className="size-7"
+        />
+        <span className="inline-flex items-center gap-1 font-medium font-subtitle text-primary text-xs">
+          <CoinIcon className="size-3.5" />
+          {user.coins}
+        </span>
+        <ChevronDownIcon
+          className={cn(
+            "size-3.5 text-foreground-dimmed transition-transform",
+            open && "rotate-180",
+          )}
+        />
+      </button>
+      {open ? (
+        <>
+          <button
+            type="button"
+            aria-label="Close"
+            tabIndex={-1}
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-40 cursor-default"
+          />
+          <div className="absolute top-full right-0 z-50 mt-3 w-60 rounded-xl border border-white/10 bg-background-rich p-2 shadow-[0_28px_80px_-20px_rgba(0,0,0,0.85)]">
+            <div className="flex items-center gap-3 rounded-lg p-2.5">
+              <Avatar
+                preset={user.avatar}
+                image={user.image}
+                name={user.pseudonym}
+                className="size-9"
+              />
+              <div className="min-w-0">
+                <p className="truncate font-display font-medium text-foreground text-sm">
+                  {user.pseudonym}
+                </p>
+                <p className="inline-flex items-center gap-1 font-subtitle text-primary text-xs">
+                  <CoinIcon className="size-3" />
+                  {user.coins} coins
+                </p>
+              </div>
+            </div>
+            <div className="my-1.5 h-px bg-white/8" />
+            <div className="flex flex-col">
+              {accountLinks.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 font-subtitle text-foreground-rich text-sm no-underline transition hover:bg-white/5"
+                  >
+                    <Icon className="size-4 text-foreground-dimmed" />
+                    {link.label}
+                  </Link>
+                );
+              })}
+            </div>
+            <div className="my-1.5 h-px bg-white/8" />
+            <button
+              type="button"
+              disabled={isLoggingOut}
+              onClick={() => void logout()}
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left font-subtitle text-foreground-rich text-sm transition hover:bg-white/5 disabled:opacity-60"
+            >
+              <LogoutIcon className="size-4 text-foreground-dimmed" />
+              {isLoggingOut ? "Signing out…" : "Log out"}
+            </button>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+};
 
 const NavLink = ({
   href,

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
+import { Avatar } from "@/components/avatar";
 import {
   BookmarkIcon,
   BranchIcon,
@@ -131,26 +132,17 @@ export default async ({ params }: Params) => {
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
         <div className="relative -mt-20 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex items-end gap-4">
-            <span
+            <Avatar
+              preset={user.avatarConfig?.preset}
+              image={user.image}
+              name={pseudonym}
               className={cn(
-                "flex size-28 items-center justify-center overflow-hidden rounded-full bg-background-rich font-display font-semibold text-4xl text-primary",
+                "size-28 text-4xl",
                 hasFrame
                   ? "ring-4 ring-primary ring-offset-2 ring-offset-background"
                   : "ring-2 ring-white/10",
               )}
-            >
-              {user.image ? (
-                <Image
-                  src={user.image}
-                  alt={pseudonym}
-                  width={112}
-                  height={112}
-                  className="size-full rounded-full object-cover"
-                />
-              ) : (
-                pseudonym.charAt(0).toUpperCase()
-              )}
-            </span>
+            />
             <div className="pb-1">
               <h1 className="font-display font-semibold text-3xl text-foreground">
                 {pseudonym}

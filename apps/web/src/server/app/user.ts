@@ -75,3 +75,19 @@ export const updateAvatar = withAuthentication(
   ) => update(Environment.SERVER, context.session.user.id, data),
   "User.updateAvatar",
 );
+
+// Set the starter avatar preset while preserving any equipped cosmetics.
+export const setAvatarPreset = withAuthentication(
+  async (context, preset: string) => {
+    const account = await get(Environment.SERVER, context.session.user.id);
+    if (!account.success) return account;
+    const avatarConfig: AvatarConfig = {
+      ...(account.data?.avatarConfig ?? {}),
+      preset,
+    };
+    return update(Environment.SERVER, context.session.user.id, {
+      avatarConfig,
+    });
+  },
+  "User.setAvatarPreset",
+);

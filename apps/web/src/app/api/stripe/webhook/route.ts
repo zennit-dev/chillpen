@@ -22,6 +22,20 @@ export const POST = async (request: Request) => {
   const event = verified.data;
 
   switch (event.type) {
+    case "checkout.session.completed": {
+      const session = event.data.object as {
+        customer: string | null;
+        client_reference_id: string | null;
+        subscription: string | null;
+      };
+      if (session.customer && session.client_reference_id)
+        await Subscription.linkCustomer(Environment.SERVER, {
+          user: session.client_reference_id,
+          customer: session.customer,
+          subscription: session.subscription ?? undefined,
+        });
+      break;
+    }
     case "customer.subscription.created":
     case "customer.subscription.updated":
     case "customer.subscription.deleted": {

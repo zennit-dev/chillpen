@@ -24,6 +24,8 @@ export type AvatarConfig = {
   frame?: string;
   effect?: string;
   items?: string[];
+  // Chosen starter avatar — one of the presets in components/avatar.tsx.
+  preset?: string;
 };
 
 export type ContinuityFlag = {

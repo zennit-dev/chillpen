@@ -44,10 +44,25 @@ export const SignUpForm = () => {
   const [submit, isPending] = useAsyncAction(
     async (data: { pseudonym: string; email: string; password: string }) => {
       setError(null);
+
+      // Catch the most common failure early with a clear, specific message.
+      const existing = await Authentication.doesEmailExist({
+        email: data.email,
+      });
+      if (existing.success && existing.data) {
+        setError("That email is already registered — sign in instead.");
+        return;
+      }
+
       const result = await Authentication.signUp(data);
       if (!result.success) {
+        const message = result.error?.message ?? "";
         setError(
-          "Could not create your account. Try a different pseudonym or email.",
+          /email/i.test(message)
+            ? "That email is already registered — sign in instead."
+            : /pseudonym/i.test(message)
+              ? "That pseudonym is already taken — try another."
+              : "Could not create your account. Try a different pseudonym or email.",
         );
         return;
       }

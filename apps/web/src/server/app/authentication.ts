@@ -327,6 +327,20 @@ export const signUp = withContext(
         error: new InvalidCredentialsError("That pseudonym is already taken"),
       };
 
+    // Reject duplicate emails up front with a clear message instead of letting
+    // better-auth surface a generic "sign up failed".
+    const existingEmail = await User.find(Environment.SERVER, {
+      where: eq(schema.user.email, payload.email.toLowerCase()),
+      limit: 1,
+    });
+    if (existingEmail.success && existingEmail.data[0])
+      return {
+        success: false as const,
+        error: new InvalidCredentialsError(
+          "An account with this email already exists",
+        ),
+      };
+
     const result = await resultify(
       async () =>
         await context.auth.signUpEmail({

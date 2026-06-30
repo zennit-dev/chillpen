@@ -14,7 +14,13 @@ export const Logo = ({ className }: Logo.Props) => (
     className={cn("inline-flex items-center gap-2", className)}
   >
     {/* biome-ignore lint/performance/noImgElement: small static SVG brand mark — nothing to optimize, and next/image rejects raw SVGs by default */}
-    <img src="/logo.svg" alt="" width={28} height={28} className="size-7 shrink-0" />
+    <img
+      src="/mark.svg"
+      alt=""
+      width={28}
+      height={28}
+      className="size-7 shrink-0"
+    />
     <span className="font-display font-semibold text-foreground text-lg tracking-tight">
       chillpen<span className="text-foreground-dimmed">.club</span>
     </span>

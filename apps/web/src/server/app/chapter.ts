@@ -51,6 +51,11 @@ export type ChapterNode = Pick<
 const countWords = (body: string): number =>
   body.trim().split(/\s+/).filter(Boolean).length;
 
+// Publishing gate (mirrors the Studio editor): a chapter must be 500–4,000
+// words to be submitted for review.
+const PUBLISH_MIN_WORDS = 500;
+const PUBLISH_MAX_WORDS = 4000;
+
 const ancestry = async (
   id: string | null,
   collected: Type[] = [],
@@ -264,6 +269,10 @@ export const submitForApproval = withAuthentication(
       return { success: false as const, error: new Error("chapter-not-found") };
     if (chapter.data.authorId !== context.session.user.id)
       return { success: false as const, error: new Error("forbidden") };
+    if (chapter.data.wordCount < PUBLISH_MIN_WORDS)
+      return { success: false as const, error: new Error("chapter-too-short") };
+    if (chapter.data.wordCount > PUBLISH_MAX_WORDS)
+      return { success: false as const, error: new Error("chapter-too-long") };
 
     return withTransaction(async (tx: TransactionScope) => {
       const updated = await update(

@@ -6,6 +6,7 @@ import { field, InferredForm } from "@zenncore/web/components/inferred-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { z } from "zod";
+import { AvatarPicker } from "@/components/avatar-picker";
 import * as User from "@/server/app/user";
 
 const config = {
@@ -24,6 +25,8 @@ const config = {
 export const OnboardingForm = () => {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState<"pseudonym" | "avatar">("pseudonym");
+  const [pseudonym, setPseudonym] = useState("");
 
   const [submit, isPending] = useAsyncAction(
     async (data: { pseudonym: string }) => {
@@ -33,9 +36,33 @@ export const OnboardingForm = () => {
         setError("That pseudonym is taken — try another.");
         return;
       }
-      router.push("/");
+      setPseudonym(data.pseudonym);
+      setStep("avatar");
     },
   );
+
+  if (step === "avatar")
+    return (
+      <div className="space-y-5">
+        <div>
+          <p className="font-display font-medium text-foreground text-lg">
+            Pick your avatar
+          </p>
+          <p className="font-body text-foreground-dimmed text-sm">
+            Choose a face for your writing. You can change it any time in
+            settings.
+          </p>
+        </div>
+        <AvatarPicker name={pseudonym} />
+        <Button
+          color="primary"
+          onClick={() => router.push("/")}
+          className="w-full"
+        >
+          Enter chillpen
+        </Button>
+      </div>
+    );
 
   return (
     <InferredForm config={config} onSubmit={submit}>

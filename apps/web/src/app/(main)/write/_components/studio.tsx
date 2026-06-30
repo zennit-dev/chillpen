@@ -22,13 +22,22 @@ export type StudioGenre = { id: string; name: string };
 export type StudioUniverse = { id: string; title: string; slug: string };
 export type StudioChapter = { id: string; title: string; depth: number };
 
-// Chapter length guidance. Confirm exact numbers with a writer — these are sane
-// defaults: enough to be a real chapter, not so long it bloats a branch.
-const MIN_WORDS = 50;
-const RECOMMENDED_WORDS = 800;
-const MAX_WORDS = 4000;
+// Chapter length guidance (chillpen publishing rules).
+const MIN_WORDS = 500; // below this, can't submit for review
+const RECOMMENDED_MIN_WORDS = 800; // "ready for review" sweet spot
+const RECOMMENDED_MAX_WORDS = 1500;
+const WARN_WORDS = 2500; // above this, gently suggest splitting
+const MAX_WORDS = 4000; // hard cap — must split before submitting
 const DESCRIPTION_LIMIT = 150;
 const WORDS_PER_MINUTE = 200;
+
+const TOO_SHORT_MESSAGE =
+  "Your chapter is too short to publish. Add more story, dialogue, or detail before submitting.";
+const READY_MESSAGE = "Great chapter length. This is ready for review.";
+const GETTING_LONG_MESSAGE =
+  "This chapter is getting long. Consider splitting it into two parts for better reader experience.";
+const TOO_LONG_MESSAGE =
+  "Please split this into multiple chapters before submitting.";
 
 const slugify = (value: string) =>
   value
@@ -85,10 +94,14 @@ export const Studio = ({
   const lengthState = (() => {
     if (words === 0) return "empty";
     if (words < MIN_WORDS) return "short";
-    if (words > MAX_WORDS) return "long";
-    if (words >= RECOMMENDED_WORDS) return "great";
+    if (words > MAX_WORDS) return "over";
+    if (words > WARN_WORDS) return "warn";
+    if (words >= RECOMMENDED_MIN_WORDS) return "great";
     return "ok";
   })();
+
+  // Hard publishing gate: 500–4,000 words. Drafts can be any length.
+  const canSubmit = words >= MIN_WORDS && words <= MAX_WORDS;
 
   const changeUniverse = async (id: string) => {
     setUniverse(id);
@@ -127,15 +140,19 @@ export const Studio = ({
     async (action: "draft" | "submit") => {
       setError(null);
 
-      if (!chapterTitle.trim() || words < MIN_WORDS) {
-        setError(`Give your chapter a title and at least ${MIN_WORDS} words.`);
+      if (!chapterTitle.trim()) {
+        setError("Give your chapter a title.");
         return;
       }
-      if (words > MAX_WORDS) {
-        setError(
-          `Chapters cap at ${MAX_WORDS.toLocaleString()} words. Trim it down.`,
-        );
-        return;
+      if (action === "submit") {
+        if (words < MIN_WORDS) {
+          setError(TOO_SHORT_MESSAGE);
+          return;
+        }
+        if (words > MAX_WORDS) {
+          setError(TOO_LONG_MESSAGE);
+          return;
+        }
       }
 
       if (mode === "continue") {
@@ -379,20 +396,21 @@ export const Studio = ({
             </span>
             <span
               className={cn(
-                "ml-auto",
+                "ml-auto max-w-[60ch] text-right",
                 lengthState === "short" && "text-warning",
-                lengthState === "long" && "text-error",
+                lengthState === "over" && "text-error",
+                lengthState === "warn" && "text-warning",
                 lengthState === "great" && "text-success",
               )}
             >
-              {lengthState === "short" && `min ${MIN_WORDS} words`}
-              {lengthState === "long" &&
-                `over the ${MAX_WORDS.toLocaleString()} word max`}
+              {lengthState === "short" && TOO_SHORT_MESSAGE}
               {lengthState === "ok" &&
-                `recommended ~${RECOMMENDED_WORDS.toLocaleString()} words`}
-              {lengthState === "great" && "great length"}
+                `Publishable — aim for ${RECOMMENDED_MIN_WORDS.toLocaleString()}–${RECOMMENDED_MAX_WORDS.toLocaleString()} words for a fuller chapter.`}
+              {lengthState === "great" && READY_MESSAGE}
+              {lengthState === "warn" && GETTING_LONG_MESSAGE}
+              {lengthState === "over" && TOO_LONG_MESSAGE}
               {lengthState === "empty" &&
-                `min ${MIN_WORDS} · recommended ${RECOMMENDED_WORDS} · max ${MAX_WORDS.toLocaleString()}`}
+                `min ${MIN_WORDS} · recommended ${RECOMMENDED_MIN_WORDS.toLocaleString()}–${RECOMMENDED_MAX_WORDS.toLocaleString()} · max ${MAX_WORDS.toLocaleString()}`}
             </span>
           </div>
 
@@ -403,7 +421,7 @@ export const Studio = ({
           <div className="mt-6 flex flex-wrap items-center gap-2">
             <Button
               color="primary"
-              disabled={isPending}
+              disabled={isPending || !canSubmit}
               onClick={() => void run("submit")}
             >
               Submit for review

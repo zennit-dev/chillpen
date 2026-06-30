@@ -14,7 +14,12 @@ export default async ({ children }: LayoutProps<"/">) => {
   const account =
     proxied.success && proxied.data.success ? proxied.data.data : null;
   const user: NavUser | null = account
-    ? { pseudonym: account.pseudonym ?? account.name, coins: account.coins }
+    ? {
+        pseudonym: account.pseudonym ?? account.name,
+        coins: account.coins,
+        avatar: account.avatarConfig?.preset ?? null,
+        image: account.image ?? null,
+      }
     : null;
   const navGenres: NavGenre[] = genres.success
     ? genres.data.map((genre) => ({

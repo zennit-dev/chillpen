@@ -167,6 +167,30 @@ export const InstagramIcon = (props: IconProps) => (
   </Glyph>
 );
 
+export const SlidersIcon = (props: IconProps) => (
+  <Glyph {...props}>
+    <path d="M4 7h9M17 7h3M4 12h3M11 12h9M4 17h6M14 17h6" />
+    <circle cx="15" cy="7" r="2" />
+    <circle cx="9" cy="12" r="2" />
+    <circle cx="12" cy="17" r="2" />
+  </Glyph>
+);
+
+export const HelpIcon = (props: IconProps) => (
+  <Glyph {...props}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M9.6 9.5a2.5 2.5 0 0 1 4.7 1.1c0 1.7-2.3 1.9-2.3 3.4" />
+    <path d="M12 17h.01" />
+  </Glyph>
+);
+
+export const LogoutIcon = (props: IconProps) => (
+  <Glyph {...props}>
+    <path d="M9 4H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h3" />
+    <path d="M14 8l4 4-4 4M18 12H9" />
+  </Glyph>
+);
+
 export {
   ArrowRightIcon,
   CheckBadgeIcon,
