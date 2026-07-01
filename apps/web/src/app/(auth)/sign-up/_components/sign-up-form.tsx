@@ -40,29 +40,37 @@ export const SignUpForm = () => {
   const router = useRouter();
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // When the email already exists we show sign-in / reset shortcuts alongside
+  // the message so the user isn't stuck.
+  const [emailTaken, setEmailTaken] = useState(false);
 
   const [submit, isPending] = useAsyncAction(
     async (data: { pseudonym: string; email: string; password: string }) => {
       setError(null);
+      setEmailTaken(false);
 
       // Catch the most common failure early with a clear, specific message.
       const existing = await Authentication.doesEmailExist({
         email: data.email,
       });
       if (existing.success && existing.data) {
-        setError("That email is already registered — sign in instead.");
+        setEmailTaken(true);
+        setError("That email already has a chillpen account.");
         return;
       }
 
       const result = await Authentication.signUp(data);
       if (!result.success) {
         const message = result.error?.message ?? "";
+        if (/email/i.test(message)) {
+          setEmailTaken(true);
+          setError("That email already has a chillpen account.");
+          return;
+        }
         setError(
-          /email/i.test(message)
-            ? "That email is already registered — sign in instead."
-            : /pseudonym/i.test(message)
-              ? "That pseudonym is already taken — try another."
-              : "Could not create your account. Try a different pseudonym or email.",
+          /pseudonym/i.test(message)
+            ? "That pseudonym is already taken — try another."
+            : "Could not create your account. Try a different pseudonym or email.",
         );
         return;
       }
@@ -95,9 +103,27 @@ export const SignUpForm = () => {
   return (
     <InferredForm config={config} onSubmit={submit}>
       {error ? (
-        <p className="rounded-md border border-error/30 bg-error/10 px-3 py-2 font-subtitle text-error text-sm">
-          {error}
-        </p>
+        <div className="rounded-md border border-error/30 bg-error/10 px-3 py-2 font-subtitle text-error text-sm">
+          <p>{error}</p>
+          {emailTaken ? (
+            <p className="mt-1 text-foreground-dimmed">
+              <Link
+                href="/sign-in"
+                className="text-primary hover:text-primary-rich"
+              >
+                Sign in
+              </Link>{" "}
+              or{" "}
+              <Link
+                href="/forgot-password"
+                className="text-primary hover:text-primary-rich"
+              >
+                reset your password
+              </Link>
+              .
+            </p>
+          ) : null}
+        </div>
       ) : null}
       <Button
         type="submit"

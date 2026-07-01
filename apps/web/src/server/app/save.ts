@@ -1,6 +1,7 @@
 "use server";
 
 import { and, eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { schema, type TransactionScope, withTransaction } from "../database";
 import { withAuthentication } from "../utils/authentication";
 import { Environment } from "../utils/environment";
@@ -27,7 +28,7 @@ export const toggle = withAuthentication(
     const current = existing.data[0];
     const direction = current ? -1 : 1;
 
-    return withTransaction(async (tx: TransactionScope) => {
+    const outcome = await withTransaction(async (tx: TransactionScope) => {
       if (current) await destroy(Environment.SERVER, current.id, { tx });
       else
         await create(
@@ -49,6 +50,13 @@ export const toggle = withAuthentication(
 
       return { success: true as const, data: { saved: !current } };
     });
+
+    // Bust the router cache for every surface that reflects saved state so the
+    // Library shelf and heart icons update on the next visit.
+    revalidatePath("/library");
+    revalidatePath("/discover");
+
+    return outcome;
   },
   "Save.toggle",
 );

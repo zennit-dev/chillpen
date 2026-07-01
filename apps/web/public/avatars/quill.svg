@@ -1,17 +1,37 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
   <defs>
-    <radialGradient id="bg" cx="36%" cy="28%" r="85%">
-      <stop offset="0" stop-color="#241a12"/>
-      <stop offset="1" stop-color="#0a0a0d"/>
+    <radialGradient id="bg" cx="38%" cy="30%" r="92%">
+      <stop offset="0" stop-color="#2c2116"/>
+      <stop offset="0.55" stop-color="#14110d"/>
+      <stop offset="1" stop-color="#070708"/>
     </radialGradient>
-    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#f6d489"/>
-      <stop offset="1" stop-color="#d2922f"/>
+    <linearGradient id="gold" x1="0.2" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#ffe9b8"/>
+      <stop offset="0.36" stop-color="#f4cf84"/>
+      <stop offset="0.72" stop-color="#dca03c"/>
+      <stop offset="1" stop-color="#a9691d"/>
     </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="46%" r="52%">
+      <stop offset="0" stop-color="#e8b45a" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#e8b45a" stop-opacity="0"/>
+    </radialGradient>
   </defs>
   <circle cx="60" cy="60" r="60" fill="url(#bg)"/>
-  <circle cx="60" cy="60" r="58" fill="none" stroke="#e8b45a" stroke-opacity="0.4" stroke-width="2"/>
-  <path fill="url(#g)" d="M60 28 L75 60 L60 92 L45 60 Z"/>
-  <line x1="60" y1="54" x2="60" y2="84" stroke="#0a0a0d" stroke-width="3.5" stroke-linecap="round"/>
-  <circle cx="60" cy="68" r="4.5" fill="#0a0a0d"/>
+  <circle cx="60" cy="60" r="59" fill="url(#halo)"/>
+  <circle cx="60" cy="60" r="58.5" fill="none" stroke="#e8b45a" stroke-opacity="0.45" stroke-width="1.5"/>
+  <circle cx="60" cy="60" r="53.5" fill="none" stroke="#000" stroke-opacity="0.28" stroke-width="1"/>
+  <!-- feather vane -->
+  <path fill="url(#gold)" d="M88 32 C70 44 54 60 42 80 C64 66 82 50 88 32 Z"/>
+  <!-- central rib + barbs -->
+  <g stroke="#5a3a10" stroke-opacity="0.55" stroke-linecap="round" fill="none">
+    <path stroke-width="1.6" d="M85 36 C68 47 54 62 46 77"/>
+    <path stroke-width="1" d="M74 41 L69 37"/>
+    <path stroke-width="1" d="M67 48 L61 45"/>
+    <path stroke-width="1" d="M60 56 L54 53"/>
+    <path stroke-width="1" d="M53 64 L48 62"/>
+  </g>
+  <!-- nib -->
+  <path fill="url(#gold)" d="M42 80 L36 89 L47 83 Z"/>
+  <!-- ink underline -->
+  <path stroke="url(#gold)" stroke-width="3" fill="none" stroke-linecap="round" d="M32 93 C47 88 63 88 80 93"/>
 </svg>

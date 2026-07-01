@@ -1,6 +1,6 @@
 import { resultify } from "@zenncore/utils";
 import Link from "next/link";
-import { Suspense } from "react";
+import { cache, Suspense } from "react";
 import { Carousel } from "@/components/carousel";
 import { HeroSlider } from "@/components/hero-slider";
 import { TrophyIcon } from "@/components/icons";
@@ -10,9 +10,19 @@ import { createMetadata } from "@/lib/seo";
 import * as Genre from "@/server/app/genre";
 import * as Leaderboard from "@/server/app/leaderboard";
 import * as ReadPath from "@/server/app/read-path";
+import * as Save from "@/server/app/save";
 import * as Universe from "@/server/app/universe";
 import { Environment } from "@/server/utils/environment";
 import { parseSearchParam } from "@/utils/search-params";
+
+// Request-memoized so every streamed shelf shares one lookup of the reader's
+// saved universes (signed-out → empty). Lets each heart render pre-filled.
+const loadSavedIds = cache(async (): Promise<Set<string>> => {
+  const result = await resultify(() =>
+    Save.savedUniverseIds(Environment.SERVER),
+  );
+  return new Set(result.success && result.data.success ? result.data.data : []);
+});
 
 export const metadata = createMetadata({
   title: "Discover",
@@ -119,9 +129,16 @@ const BrowseShelf = async ({
   eyebrow?: string;
   load: ShelfLoader;
 }) => {
-  const result = await load();
+  const [result, savedIds] = await Promise.all([load(), loadSavedIds()]);
   if (!result.success || result.data.length === 0) return null;
-  return <Shelf title={title} eyebrow={eyebrow} cards={result.data} />;
+  return (
+    <Shelf
+      title={title}
+      eyebrow={eyebrow}
+      cards={result.data}
+      savedIds={savedIds}
+    />
+  );
 };
 
 const ContinueShelf = async () => {
@@ -132,11 +149,13 @@ const ContinueShelf = async () => {
     entry.universe ? [{ ...entry.universe, author: null, genreNames: [] }] : [],
   );
   if (cards.length === 0) return null;
+  const savedIds = await loadSavedIds();
   return (
     <Shelf
       title="Continue Reading"
       eyebrow="Pick up where you left"
       cards={cards}
+      savedIds={savedIds}
     />
   );
 };
@@ -186,11 +205,13 @@ const Shelf = ({
   eyebrow,
   href,
   cards,
+  savedIds,
 }: {
   title: string;
   eyebrow?: string;
   href?: string;
   cards: Universe.Card[];
+  savedIds?: Set<string>;
 }) => (
   <section className="mx-auto max-w-7xl px-4 sm:px-6">
     <SectionHeader
@@ -204,6 +225,7 @@ const Shelf = ({
         <StoryCard
           key={card.id}
           universe={card}
+          saved={savedIds?.has(card.id)}
           className="w-[240px] shrink-0 snap-start sm:w-[260px]"
         />
       ))}
@@ -255,9 +277,10 @@ const Filters = async ({ active }: { active?: string }) => {
 };
 
 const Grid = async ({ genre }: { genre?: string }) => {
-  const [genres, universes] = await Promise.all([
+  const [genres, universes, savedIds] = await Promise.all([
     Genre.list(Environment.SERVER),
     Universe.trending(Environment.SERVER, { size: 48 }),
+    loadSavedIds(),
   ]);
   if (!universes.success) return null;
 
@@ -279,7 +302,11 @@ const Grid = async ({ genre }: { genre?: string }) => {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
       {filtered.map((universe) => (
-        <StoryCard key={universe.id} universe={universe} />
+        <StoryCard
+          key={universe.id}
+          universe={universe}
+          saved={savedIds.has(universe.id)}
+        />
       ))}
     </div>
   );

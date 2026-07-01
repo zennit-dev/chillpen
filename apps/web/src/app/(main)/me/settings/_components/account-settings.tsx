@@ -18,6 +18,8 @@ export const AccountSettings = ({
   avatar,
   subscriptionStatus,
 }: AccountSettings.Props) => {
+  const [avatarNote, setAvatarNote] = useState<Feedback>(null);
+
   const [pseudonym, setPseudonym] = useState(initialPseudonym);
   const [pseudonymNote, setPseudonymNote] = useState<Feedback>(null);
   const [savePseudonym, savingPseudonym] = useAsyncAction(async () => {
@@ -91,7 +93,20 @@ export const AccountSettings = ({
         title="Avatar"
         description="Pick the face other writers see across chillpen."
       >
-        <AvatarPicker initial={avatar} name={pseudonym} />
+        <AvatarPicker
+          initial={avatar}
+          name={pseudonym}
+          onSelected={() =>
+            setAvatarNote({ tone: "ok", message: "Avatar updated." })
+          }
+          onError={() =>
+            setAvatarNote({
+              tone: "error",
+              message: "Could not update your avatar. Try again.",
+            })
+          }
+        />
+        <Status note={avatarNote} />
       </Section>
 
       <Section title="Pseudonym" description="Your identity across chillpen.">

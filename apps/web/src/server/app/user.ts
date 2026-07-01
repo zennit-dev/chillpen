@@ -1,6 +1,7 @@
 "use server";
 
 import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { schema } from "../database";
 import type { AvatarConfig } from "../database/schema";
 import { withAuthentication } from "../utils/authentication";
@@ -85,9 +86,13 @@ export const setAvatarPreset = withAuthentication(
       ...(account.data?.avatarConfig ?? {}),
       preset,
     };
-    return update(Environment.SERVER, context.session.user.id, {
+    const result = await update(Environment.SERVER, context.session.user.id, {
       avatarConfig,
     });
+    // Refresh the surfaces that render the avatar (nav, dashboard, profile).
+    revalidatePath("/me");
+    revalidatePath("/me/settings");
+    return result;
   },
   "User.setAvatarPreset",
 );

@@ -28,7 +28,7 @@ type ButtonVariantsProps = {
 } & ClassProp;
 
 export const buttonVariants: (props?: ButtonVariantsProps) => string = cva(
-  "box-border inline-flex w-fit cursor-pointer items-center justify-center overflow-hidden whitespace-nowrap rounded-lg px-2.5 py-2 text-sm transition-all duration-300 active:scale-95",
+  "box-border inline-flex w-fit cursor-pointer items-center justify-center overflow-hidden whitespace-nowrap rounded-[5px] px-2.5 py-2 text-sm transition-all duration-300 active:scale-95",
   {
     variants: {
       variant: {
@@ -40,7 +40,7 @@ export const buttonVariants: (props?: ButtonVariantsProps) => string = cva(
         flat: "px-4",
       },
       size: {
-        icon: "flex size-8 items-center justify-center rounded-lg p-2",
+        icon: "flex size-8 items-center justify-center rounded-[5px] p-2",
       },
       color: {
         primary: "text-white",

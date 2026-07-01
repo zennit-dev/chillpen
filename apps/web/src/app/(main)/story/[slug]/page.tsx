@@ -1,7 +1,9 @@
+import { resultify } from "@zenncore/utils";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import {
   BranchIcon,
   MapIcon,
@@ -13,6 +15,7 @@ import {
 import { SaveButton } from "@/components/save-button";
 import { Chip, formatCount, Stat } from "@/components/ui";
 import { createMetadata, createUniverseSchema, seo } from "@/lib/seo";
+import * as Save from "@/server/app/save";
 import * as Universe from "@/server/app/universe";
 import { Environment } from "@/server/utils/environment";
 import { Continuations } from "./_components/continuations";
@@ -148,7 +151,13 @@ export default async ({ params }: Params) => {
               <PenIcon className="size-4" />
               Add a branch
             </Link>
-            <SaveButton universe={universe.id} className="size-10" />
+            <Suspense
+              fallback={
+                <SaveButton universe={universe.id} className="size-10" />
+              }
+            >
+              <SaveSlot universe={universe.id} />
+            </Suspense>
           </div>
         </div>
       </section>
@@ -176,4 +185,15 @@ export default async ({ params }: Params) => {
       </section>
     </main>
   );
+};
+
+// Streamed so the reader's saved state (a cookie read) never blocks the static
+// story shell — the heart hydrates pre-filled when they've already saved it.
+const SaveSlot = async ({ universe }: { universe: string }) => {
+  const saved = await resultify(() =>
+    Save.savedUniverseIds(Environment.SERVER),
+  );
+  const isSaved =
+    saved.success && saved.data.success && saved.data.data.includes(universe);
+  return <SaveButton universe={universe} saved={isSaved} className="size-10" />;
 };

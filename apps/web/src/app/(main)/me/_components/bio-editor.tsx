@@ -49,7 +49,11 @@ export const BioEditor = ({ initial }: BioEditor.Props) => {
         className="w-full resize-none rounded-md border border-accent-foreground bg-white/[0.02] px-3 py-2 font-body text-foreground text-sm outline-none transition focus:border-primary/45"
       />
       <div className="mt-1.5 flex items-center gap-2">
-        <Button color="primary" disabled={isPending} onClick={() => void save()}>
+        <Button
+          color="primary"
+          disabled={isPending}
+          onClick={() => void save()}
+        >
           Save bio
         </Button>
         <button

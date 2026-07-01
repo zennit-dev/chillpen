@@ -100,9 +100,6 @@ export const Studio = ({
     return "ok";
   })();
 
-  // Hard publishing gate: 500–4,000 words. Drafts can be any length.
-  const canSubmit = words >= MIN_WORDS && words <= MAX_WORDS;
-
   const changeUniverse = async (id: string) => {
     setUniverse(id);
     setParent("");
@@ -136,6 +133,18 @@ export const Studio = ({
     if (result.success) setFlags(result.data);
   });
 
+  // Turns a failed publish result into the exact reader-facing copy.
+  const publishMessage = (message?: string) => {
+    switch (message) {
+      case "chapter-too-short":
+        return TOO_SHORT_MESSAGE;
+      case "chapter-too-long":
+        return TOO_LONG_MESSAGE;
+      default:
+        return null;
+    }
+  };
+
   const [run, isPending] = useAsyncAction(
     async (action: "draft" | "submit") => {
       setError(null);
@@ -144,21 +153,22 @@ export const Studio = ({
         setError("Give your chapter a title.");
         return;
       }
-      if (action === "submit") {
-        if (words < MIN_WORDS) {
-          setError(TOO_SHORT_MESSAGE);
-          return;
-        }
-        if (words > MAX_WORDS) {
-          setError(TOO_LONG_MESSAGE);
-          return;
-        }
-      }
 
       if (mode === "continue") {
         if (!universe || !parent) {
           setError("Pick a universe and the chapter you're continuing from.");
           return;
+        }
+        // Publishing for review enforces the 500–4,000 word rule; drafts don't.
+        if (action === "submit") {
+          if (words < MIN_WORDS) {
+            setError(TOO_SHORT_MESSAGE);
+            return;
+          }
+          if (words > MAX_WORDS) {
+            setError(TOO_LONG_MESSAGE);
+            return;
+          }
         }
         const created = await Chapter.fork({
           parent,
@@ -167,22 +177,46 @@ export const Studio = ({
           summary: summary || undefined,
         });
         if (!created.success) {
-          setError("Could not save your chapter.");
+          setError(
+            publishMessage(created.error?.message) ??
+              "Could not save your chapter. Try again.",
+          );
           return;
         }
-        if (action === "submit")
-          await Chapter.submitForApproval({ chapter: created.data.id });
+        // Surface the outcome instead of silently redirecting — this is why
+        // "publish for review" appeared to do nothing before.
+        if (action === "submit") {
+          const submitted = await Chapter.submitForApproval({
+            chapter: created.data.id,
+          });
+          if (!submitted.success) {
+            setError(
+              publishMessage(submitted.error?.message) ??
+                "Saved as a draft, but we couldn't send it for review. Open it from your dashboard to retry.",
+            );
+            return;
+          }
+        }
         router.push("/me");
         return;
       }
 
-      // new universe
+      // New universe — the author's opening chapter is published directly, so
+      // there's no review word-gate; we only need the essentials.
       if (!universeTitle.trim()) {
         setError("Your universe needs a title.");
         return;
       }
       if (selectedGenres.length === 0) {
         setError("Pick at least one genre.");
+        return;
+      }
+      if (words === 0) {
+        setError("Write your opening chapter before publishing.");
+        return;
+      }
+      if (words > MAX_WORDS) {
+        setError(TOO_LONG_MESSAGE);
         return;
       }
 
@@ -211,7 +245,9 @@ export const Studio = ({
         },
       });
       if (!created.success || !created.data) {
-        setError("Could not create the universe.");
+        setError(
+          "Could not create the universe. A universe with a similar name may already exist — try a different title.",
+        );
         return;
       }
       router.push(`/story/${created.data.slug}`);
@@ -419,21 +455,33 @@ export const Studio = ({
           ) : null}
 
           <div className="mt-6 flex flex-wrap items-center gap-2">
-            <Button
-              color="primary"
-              disabled={isPending || !canSubmit}
-              onClick={() => void run("submit")}
-            >
-              Submit for review
-            </Button>
-            <Button
-              variant="outline"
-              color="neutral"
-              disabled={isPending}
-              onClick={() => void run("draft")}
-            >
-              Save draft
-            </Button>
+            {mode === "continue" ? (
+              <>
+                <Button
+                  color="primary"
+                  disabled={isPending}
+                  onClick={() => void run("submit")}
+                >
+                  Submit for review
+                </Button>
+                <Button
+                  variant="outline"
+                  color="neutral"
+                  disabled={isPending}
+                  onClick={() => void run("draft")}
+                >
+                  Save draft
+                </Button>
+              </>
+            ) : (
+              <Button
+                color="primary"
+                disabled={isPending}
+                onClick={() => void run("submit")}
+              >
+                Publish universe
+              </Button>
+            )}
             <Button
               variant="ghost"
               color="neutral"

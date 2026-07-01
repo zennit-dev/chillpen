@@ -1,18 +1,36 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
   <defs>
-    <radialGradient id="bg" cx="36%" cy="28%" r="85%">
-      <stop offset="0" stop-color="#241a12"/>
-      <stop offset="1" stop-color="#0a0a0d"/>
+    <radialGradient id="bg" cx="38%" cy="30%" r="92%">
+      <stop offset="0" stop-color="#2c2116"/>
+      <stop offset="0.55" stop-color="#14110d"/>
+      <stop offset="1" stop-color="#070708"/>
     </radialGradient>
-    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#f6d489"/>
-      <stop offset="1" stop-color="#d2922f"/>
+    <linearGradient id="gold" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#ffe9b8"/>
+      <stop offset="0.38" stop-color="#f4cf84"/>
+      <stop offset="0.74" stop-color="#dca03c"/>
+      <stop offset="1" stop-color="#a9691d"/>
     </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="46%" r="52%">
+      <stop offset="0" stop-color="#e8b45a" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#e8b45a" stop-opacity="0"/>
+    </radialGradient>
   </defs>
   <circle cx="60" cy="60" r="60" fill="url(#bg)"/>
-  <circle cx="60" cy="60" r="58" fill="none" stroke="#e8b45a" stroke-opacity="0.4" stroke-width="2"/>
-  <path fill="url(#g)" d="M38 42 C50 36 70 36 82 42 C84 60 78 74 68 82 C62 86 58 86 52 82 C42 74 36 60 38 42 Z"/>
-  <ellipse cx="51" cy="58" rx="4" ry="5.5" fill="#0a0a0d"/>
-  <ellipse cx="69" cy="58" rx="4" ry="5.5" fill="#0a0a0d"/>
-  <path d="M50 70 Q60 78 70 70" stroke="#0a0a0d" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <circle cx="60" cy="60" r="59" fill="url(#halo)"/>
+  <circle cx="60" cy="60" r="58.5" fill="none" stroke="#e8b45a" stroke-opacity="0.45" stroke-width="1.5"/>
+  <circle cx="60" cy="60" r="53.5" fill="none" stroke="#000" stroke-opacity="0.28" stroke-width="1"/>
+  <!-- mask face -->
+  <path fill="url(#gold)" d="M34 40 C46 34 74 34 86 40 C87 42 86 46 84 47 C74 44 46 44 36 47 C34 46 33 42 34 40 Z"/>
+  <path fill="url(#gold)" d="M36 47 C46 44 74 44 84 47 C85 62 79 78 68 86 C63 89 57 89 52 86 C41 78 35 62 36 47 Z"/>
+  <!-- eye holes -->
+  <path fill="#0b0a08" d="M45 58 C48 54 55 54 57 59 C55 63 48 63 45 58 Z"/>
+  <path fill="#0b0a08" d="M63 59 C65 54 72 54 75 58 C72 63 65 63 63 59 Z"/>
+  <!-- smile -->
+  <path d="M50 72 Q60 80 70 72" stroke="#0b0a08" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- brow accents -->
+  <path d="M44 52 C48 49 54 49 58 51" stroke="#7a4f16" stroke-opacity="0.6" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+  <path d="M62 51 C66 49 72 49 76 52" stroke="#7a4f16" stroke-opacity="0.6" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+  <!-- forehead jewel -->
+  <circle cx="60" cy="51" r="2.2" fill="#fff4d6"/>
 </svg>

@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { genericOAuth } from "better-auth/plugins";
+import { sendResetPasswordEmail } from "@/server/app/reset-password-email";
 import { sendVerificationEmail } from "@/server/app/verification-email";
 import { db, schema } from "@/server/database";
 
@@ -34,6 +35,12 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: canSendVerificationEmail,
+    // Deliver the reset link to our own /reset-password page (built from the
+    // token) rather than better-auth's default verify-and-redirect endpoint.
+    sendResetPassword: async ({ user, token }) => {
+      const resetUrl = `${process.env.APP_HOST}/reset-password?token=${encodeURIComponent(token)}`;
+      await sendResetPasswordEmail({ to: user.email, resetUrl });
+    },
   },
   emailVerification: {
     sendOnSignUp: canSendVerificationEmail,
