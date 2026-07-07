@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { nextCookies } from "better-auth/next-js";
 import { genericOAuth } from "better-auth/plugins";
 import { sendResetPasswordEmail } from "@/server/app/reset-password-email";
 import { sendVerificationEmail } from "@/server/app/verification-email";
@@ -81,5 +82,11 @@ export const auth = betterAuth({
         },
       ],
     }),
+    // MUST be last: bridges better-auth's cookie writes to Next's cookies() so
+    // sign-in/sign-up performed inside server actions actually set the session
+    // cookie. Without it the session is created in the DB but never delivered to
+    // the browser, so every `withAuthentication` action (publishing a universe
+    // or chapter, etc.) fails getSession() as Unauthenticated.
+    nextCookies(),
   ],
 });
