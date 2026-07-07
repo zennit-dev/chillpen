@@ -235,9 +235,22 @@ export const forgotPassword = withContext(
 export const getProxiedCurrentUser = withContext(async (context) => {
   const jar = await cookies();
   const cached = jar.get("user")?.value;
-  const payload = cached
-    ? verify(cached, process.env.BETTER_AUTH_SECRET as string)
-    : null;
+  // The signed "user" cookie is only a render-time cache of the profile — it is
+  // NOT proof of authentication. Trust it only while a real better-auth session
+  // cookie is present (`__Secure-better-auth.session_token` over HTTPS,
+  // `better-auth.session_token` in dev). Otherwise a session that was cleared,
+  // expired, or predates the nextCookies fix would leave the user "logged in"
+  // for page guards but Unauthenticated for every server action (publishing a
+  // book/chapter, liking, following…). Falling through to getSession returns
+  // null in that case, so guards redirect to /sign-in and a fresh login
+  // re-establishes the session — self-healing the desync.
+  const hasSessionCookie = jar
+    .getAll()
+    .some((cookie) => cookie.name.includes("session_token"));
+  const payload =
+    cached && hasSessionCookie
+      ? verify(cached, process.env.BETTER_AUTH_SECRET as string)
+      : null;
   const parsed =
     payload !== null ? resultify(() => JSON.parse(payload) as User.Type) : null;
   if (parsed?.success) return { success: true, data: parsed.data };
