@@ -1,7 +1,8 @@
 "use server";
 
+import { resultify } from "@zenncore/utils";
 import type { Override } from "@zenncore/utils/types";
-import { and, eq, gt, inArray } from "drizzle-orm";
+import { and, eq, gt, inArray, like } from "drizzle-orm";
 import { unique } from "@/utils/array";
 import { schema, type TransactionScope, withTransaction } from "../database";
 import { withAuthentication } from "../utils/authentication";
@@ -269,6 +270,30 @@ export const search = withContext(async (_, query: string) => {
   return { success: true as const, data: await decorate(matched) };
 }, "Universe.search");
 
+/**
+ * Resolve a collision-free slug. A title whose slug already exists (a retry, a
+ * common title, or seed data) would otherwise violate the `universe_slug_idx`
+ * unique index and throw mid-transaction — which escaped as an unhandled 500
+ * and surfaced in the Studio as a silent "nothing happened" on publish. We pick
+ * the smallest free numeric suffix instead (`my-world`, `my-world-2`, …), so
+ * publishing always succeeds.
+ */
+const resolveUniqueSlug = async (base: string): Promise<string> => {
+  const seed = base.length > 0 ? base : "universe";
+  const matches = await find(Environment.SERVER, {
+    where: like(schema.universe.slug, `${seed}%`),
+  });
+  const taken = new Set(
+    matches.success ? matches.data.map((entry) => entry.slug) : [],
+  );
+  if (!taken.has(seed)) return seed;
+  for (let suffix = 2; suffix < 10_000; suffix++) {
+    const candidate = `${seed}-${suffix}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+  return `${seed}-${Date.now()}`;
+};
+
 export const createUniverse = withAuthentication(
   async (
     context,
@@ -281,48 +306,74 @@ export const createUniverse = withAuthentication(
       tags?: string[];
       firstChapter: { title: string; body: string; summary?: string };
     },
-  ) =>
-    withTransaction(async (tx: TransactionScope) => {
-      const universe = await create(
-        Environment.SERVER,
-        {
-          slug: input.slug,
-          title: input.title,
-          description: input.description,
-          cover: input.cover,
-          genres: input.genres,
-          tags: input.tags ?? [],
-          originatingAuthorId: context.session.user.id,
-        },
-        { tx },
-      );
-      if (!universe.success) return universe;
+  ) => {
+    // Guarantee a unique slug up front so a title collision can't abort the
+    // insert transaction (a duplicate key previously bubbled up as a 500).
+    const slug = await resolveUniqueSlug(input.slug);
 
-      const root = await Chapter.create(
-        Environment.SERVER,
-        {
-          universeId: universe.data.id,
-          parentChapterId: null,
-          authorId: context.session.user.id,
-          title: input.firstChapter.title,
-          body: input.firstChapter.body,
-          summary: input.firstChapter.summary,
-          depth: 0,
-          wordCount: input.firstChapter.body.trim().split(/\s+/).filter(Boolean)
-            .length,
-          status: "approved",
-        },
-        { tx },
-      );
-      if (!root.success) return root;
+    // Wrap the whole transaction in resultify: on any failure we throw inside
+    // the callback so drizzle rolls back cleanly, and the caller still gets a
+    // Result instead of an unhandled rejection.
+    const created = await resultify(() =>
+      withTransaction(async (tx: TransactionScope) => {
+        const universe = await create(
+          Environment.SERVER,
+          {
+            slug,
+            title: input.title,
+            description: input.description,
+            cover: input.cover,
+            genres: input.genres,
+            tags: input.tags ?? [],
+            originatingAuthorId: context.session.user.id,
+          },
+          { tx },
+        );
+        if (!universe.success) throw universe.error;
 
-      return update(
-        Environment.SERVER,
-        universe.data.id,
-        { rootChapterId: root.data.id, chapterCount: 1 },
-        { tx },
-      );
-    }),
+        const root = await Chapter.create(
+          Environment.SERVER,
+          {
+            universeId: universe.data.id,
+            parentChapterId: null,
+            authorId: context.session.user.id,
+            title: input.firstChapter.title,
+            body: input.firstChapter.body,
+            summary: input.firstChapter.summary,
+            depth: 0,
+            wordCount: input.firstChapter.body
+              .trim()
+              .split(/\s+/)
+              .filter(Boolean).length,
+            status: "approved",
+          },
+          { tx },
+        );
+        if (!root.success) throw root.error;
+
+        const finished = await update(
+          Environment.SERVER,
+          universe.data.id,
+          { rootChapterId: root.data.id, chapterCount: 1 },
+          { tx },
+        );
+        if (!finished.success) throw finished.error;
+        return finished.data;
+      }),
+    );
+
+    // Never surface the raw DatabaseError — its message embeds the failed SQL
+    // and the serialized chapter body. Keep it as `cause` so Sentry still gets
+    // the detail, and hand the writer a message they can act on.
+    if (!created.success)
+      return {
+        success: false as const,
+        error: new Error("We couldn't publish your universe. Please try again.", {
+          cause: created.error,
+        }),
+      };
+    return { success: true as const, data: created.data };
+  },
   "Universe.createUniverse",
 );
 

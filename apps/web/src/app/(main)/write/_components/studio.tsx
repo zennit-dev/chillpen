@@ -244,10 +244,15 @@ export const Studio = ({
           summary: summary || undefined,
         },
       });
-      if (!created.success || !created.data) {
+      if (!created.success) {
         setError(
-          "Could not create the universe. A universe with a similar name may already exist — try a different title.",
+          created.error?.message ??
+            "Could not publish your universe. Please try again.",
         );
+        return;
+      }
+      if (!created.data) {
+        setError("Could not publish your universe. Please try again.");
         return;
       }
       router.push(`/story/${created.data.slug}`);
