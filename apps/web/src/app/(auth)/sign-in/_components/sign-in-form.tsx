@@ -7,37 +7,54 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { z } from "zod";
+import { signInFeedback, type AuthFeedback } from "@/lib/auth-messages";
 import * as Authentication from "@/server/app/authentication";
+import { AuthAlert } from "../../_components/auth-alert";
 
 const config = {
   email: field({
     shape: "text",
     type: "email",
-    validator: z.string().email(),
+    validator: z.string().email("Enter a valid email address."),
     label: "Email",
     placeholder: "you@example.com",
   }),
   password: field({
     shape: "text",
     type: "password",
-    validator: z.string().min(8),
+    validator: z.string().min(8, "Password must be at least 8 characters."),
     label: "Password",
   }),
 };
 
 export const SignInForm = ({ justReset }: SignInForm.Props) => {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<AuthFeedback | null>(null);
 
   const [submit, isPending] = useAsyncAction(
     async (data: { email: string; password: string }) => {
-      setError(null);
-      const result = await Authentication.signIn(data);
-      if (!result.success) {
-        setError("That email and password don't match.");
-        return;
+      setFeedback(null);
+
+      try {
+        const result = await Authentication.signIn({
+          email: data.email.trim().toLowerCase(),
+          password: data.password,
+        });
+
+        if (!result.success) {
+          setFeedback(signInFeedback(result.error));
+          return;
+        }
+
+        router.push("/discover");
+        router.refresh();
+      } catch {
+        setFeedback({
+          message:
+            "Something went wrong while signing in. Try again in a moment.",
+          hint: "reset-password",
+        });
       }
-      router.push("/discover");
     },
   );
 
@@ -48,11 +65,7 @@ export const SignInForm = ({ justReset }: SignInForm.Props) => {
           Password updated — sign in with your new password.
         </p>
       ) : null}
-      {error ? (
-        <p className="rounded-md border border-error/30 bg-error/10 px-3 py-2 font-subtitle text-error text-sm">
-          {error}
-        </p>
-      ) : null}
+      <AuthAlert feedback={feedback} />
       <div className="text-right">
         <Link
           href="/forgot-password"
@@ -67,7 +80,7 @@ export const SignInForm = ({ justReset }: SignInForm.Props) => {
         disabled={isPending}
         className="w-full"
       >
-        Sign in
+        {isPending ? "Signing in…" : "Sign in"}
       </Button>
       <p className="text-center font-subtitle text-foreground-dimmed text-sm">
         New here?{" "}

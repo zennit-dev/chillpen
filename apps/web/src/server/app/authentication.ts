@@ -2,11 +2,12 @@
 
 import { render } from "@react-email/render";
 import { resultify } from "@zenncore/utils";
-import { eq } from "drizzle-orm";
+import { isAPIError } from "better-auth/api";
+import { and, eq } from "drizzle-orm";
 import { cookies, headers } from "next/headers";
 import { Resend } from "resend";
 import { VerifyEmail } from "@/public/templates/verify";
-import { schema } from "../database";
+import { db, schema } from "../database";
 import { withAuthentication } from "../utils/authentication";
 import { withContext } from "../utils/context";
 import { Environment } from "../utils/environment";
@@ -128,37 +129,80 @@ export const signInWithGoogle = withContext(
   "Authentication.signInWithGoogle",
 );
 
+const normalizeEmail = (email: string) => email.trim().toLowerCase();
+
+const signInFailure = (message: string) => ({
+  success: false as const,
+  error: new InvalidCredentialsError(message),
+});
+
+const hasCredentialAccount = async (user: string) => {
+  const rows = await db
+    .select({ id: schema.account.id })
+    .from(schema.account)
+    .where(
+      and(
+        eq(schema.account.userId, user),
+        eq(schema.account.providerId, "credential"),
+      ),
+    )
+    .limit(1);
+  return rows[0] ?? null;
+};
+
 export const signIn = withContext(
   async (context, { email, password }: { email: string; password: string }) => {
-    const result = await resultify(async () => {
+    const address = normalizeEmail(email);
+
+    const users = await User.find(Environment.SERVER, {
+      where: eq(schema.user.email, address),
+      limit: 1,
+    });
+    if (!users.success) return users;
+
+    if (!users.data[0])
+      return signInFailure(
+        "No account found for this email. Create one below or try another address.",
+      );
+
+    const credential = await hasCredentialAccount(users.data[0].id);
+    if (!credential)
+      return signInFailure(
+        "This account has no password yet. Use Forgot password to set one.",
+      );
+
+    try {
       const response = await context.auth.signInEmail({
         body: {
-          email,
+          email: address,
           password,
         },
       });
-      return response;
-    });
 
-    if (!result.success) {
-      return {
-        success: false,
-        error: new InvalidCredentialsError("Invalid credentials provided", {
-          cause: result.error,
-        }),
-      };
+      context.span.addBreadcrumb({
+        category: "auth.sign_in",
+        data: { "user.id": response.user.id, "user.email": address },
+      });
+
+      const jar = await cookies();
+      setUserCookie(jar, response.user as User.Type);
+
+      return { success: true as const, data: response.user };
+    } catch (error) {
+      if (isAPIError(error)) {
+        const code = error.body?.code;
+        if (code === "EMAIL_NOT_VERIFIED")
+          return signInFailure(
+            "Verify your email before signing in. Check your inbox for the verification link.",
+          );
+        if (code === "INVALID_EMAIL_OR_PASSWORD")
+          return signInFailure("Incorrect password for this email.");
+      }
+
+      return signInFailure(
+        "Could not sign in. Check your email and password, or reset your password.",
+      );
     }
-
-    context.span.addBreadcrumb({
-      category: "auth.sign_in",
-      data: { "user.id": result.data.user.id, "user.email": email },
-    });
-
-    const jar = await cookies();
-
-    setUserCookie(jar, result.data.user as User.Type);
-
-    return { success: true, data: result.data.user };
   },
   "Authentication.signIn",
 );
@@ -308,7 +352,7 @@ export const changePassword = withAuthentication(
 export const doesEmailExist = withContext(
   async (_, { email }: { email: string }) => {
     const users = await User.find(Environment.SERVER, {
-      where: eq(schema.user.email, email),
+      where: eq(schema.user.email, normalizeEmail(email)),
     });
 
     if (!users.success) return users;
@@ -328,87 +372,86 @@ export const signUp = withContext(
       password: string;
     },
   ) => {
-    // Pseudonyms are the identity (APP.md §5.6) — claim it up front and reject
-    // collisions before creating the account.
+    const email = normalizeEmail(payload.email);
+    const pseudonym = payload.pseudonym.trim();
+
     const taken = await User.find(Environment.SERVER, {
-      where: eq(schema.user.pseudonym, payload.pseudonym),
+      where: eq(schema.user.pseudonym, pseudonym),
       limit: 1,
     });
     if (taken.success && taken.data[0])
-      return {
-        success: false as const,
-        error: new InvalidCredentialsError("That pseudonym is already taken"),
-      };
+      return signInFailure("That pseudonym is already taken — try another.");
 
-    // Reject duplicate emails up front with a clear message instead of letting
-    // better-auth surface a generic "sign up failed".
     const existingEmail = await User.find(Environment.SERVER, {
-      where: eq(schema.user.email, payload.email.toLowerCase()),
+      where: eq(schema.user.email, email),
       limit: 1,
     });
     if (existingEmail.success && existingEmail.data[0])
-      return {
-        success: false as const,
-        error: new InvalidCredentialsError(
-          "An account with this email already exists",
-        ),
-      };
+      return signInFailure("An account with this email already exists.");
 
-    const result = await resultify(
-      async () =>
-        await context.auth.signUpEmail({
-          body: {
-            name: payload.pseudonym,
-            surname: payload.pseudonym,
-            email: payload.email,
-            password: payload.password,
-            callbackURL: `${process.env.APP_HOST}/verify/success`,
-            role: "user",
-          },
-        }),
-    );
+    try {
+      const response = await context.auth.signUpEmail({
+        body: {
+          name: pseudonym,
+          surname: pseudonym,
+          email,
+          password: payload.password,
+          callbackURL: `${process.env.APP_HOST}/verify/success`,
+          role: "user",
+        },
+      });
 
-    if (!result.success) {
-      return {
-        success: false as const,
-        error: new InvalidCredentialsError(
-          result.error?.message ?? "Sign up failed",
-          { cause: result.error },
-        ),
-      };
-    }
+      context.span.addBreadcrumb({
+        category: "auth.sign_up",
+        data: { "user.email": email },
+      });
 
-    context.span.addBreadcrumb({
-      category: "auth.sign_up",
-      data: { "user.email": payload.email },
-    });
+      await User.update(Environment.SERVER, response.user.id, {
+        pseudonym,
+        subscriptionStatus: "trial",
+        trialEndsAt: new Date(Date.now() + TRIAL_MS),
+        avatarConfig: {
+          preset: "bird",
+          ownedAvatars: ["bird"],
+          ownedItems: [],
+          equipped: {},
+        },
+      });
 
-    // Set the pseudonym + open the 30-day reading trial on the fresh account.
-    await User.update(Environment.SERVER, result.data.user.id, {
-      pseudonym: payload.pseudonym,
-      subscriptionStatus: "trial",
-      trialEndsAt: new Date(Date.now() + TRIAL_MS),
-    });
+      const canSendVerificationEmail =
+        (process.env.RESEND_API_KEY ?? "").length > 20;
 
-    // Without a real Resend key we never send a verification email, so
-    // better-auth returns a usable session — sign the user in directly so they
-    // can continue to the payment step. Mirrors signIn.
-    const canSendVerificationEmail =
-      (process.env.RESEND_API_KEY ?? "").length > 20;
+      if (!canSendVerificationEmail) {
+        const jar = await cookies();
+        const fresh = await User.get(Environment.SERVER, response.user.id);
+        setUserCookie(
+          jar,
+          fresh.success && fresh.data
+            ? fresh.data
+            : (response.user as User.Type),
+        );
+        return { success: true as const, data: { verified: true } };
+      }
 
-    if (!canSendVerificationEmail) {
-      const jar = await cookies();
-      const fresh = await User.get(Environment.SERVER, result.data.user.id);
-      setUserCookie(
-        jar,
-        fresh.success && fresh.data
-          ? fresh.data
-          : (result.data.user as User.Type),
+      return { success: true as const, data: { verified: false } };
+    } catch (error) {
+      if (isAPIError(error)) {
+        const code = error.body?.code;
+        const message = error.body?.message ?? error.message;
+        if (
+          code === "USER_ALREADY_EXISTS" ||
+          code === "EMAIL_ALREADY_EXISTS" ||
+          /email/i.test(message)
+        )
+          return signInFailure("An account with this email already exists.");
+      }
+
+      return signInFailure(
+        error instanceof Error
+          ? error.message
+          : "Could not create your account. Try a different email or pseudonym.",
       );
-      return { success: true as const, data: { verified: true } };
     }
-
-    return { success: true as const, data: { verified: false } };
   },
   "Authentication.signUp",
 );

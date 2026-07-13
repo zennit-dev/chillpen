@@ -8,30 +8,35 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { z } from "zod";
 import { CheckBadgeIcon } from "@/components/icons";
+import {
+  signUpFeedback,
+  type AuthFeedback,
+} from "@/lib/auth-messages";
 import * as Authentication from "@/server/app/authentication";
+import { AuthAlert } from "../../_components/auth-alert";
 
 const config = {
   pseudonym: field({
     shape: "text",
     validator: z
       .string()
-      .min(3)
-      .max(20)
-      .regex(/^[a-zA-Z0-9_]+$/, "Letters, numbers and underscores only"),
+      .min(3, "At least 3 characters.")
+      .max(20, "At most 20 characters.")
+      .regex(/^[a-zA-Z0-9_]+$/, "Letters, numbers and underscores only."),
     label: "Pseudonym",
     placeholder: "LunaInk",
   }),
   email: field({
     shape: "text",
     type: "email",
-    validator: z.string().email(),
+    validator: z.string().email("Enter a valid email address."),
     label: "Email",
     placeholder: "you@example.com",
   }),
   password: field({
     shape: "text",
     type: "password",
-    validator: z.string().min(8),
+    validator: z.string().min(8, "Password must be at least 8 characters."),
     label: "Password",
   }),
 };
@@ -39,47 +44,48 @@ const config = {
 export const SignUpForm = () => {
   const router = useRouter();
   const [sent, setSent] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  // When the email already exists we show sign-in / reset shortcuts alongside
-  // the message so the user isn't stuck.
-  const [emailTaken, setEmailTaken] = useState(false);
+  const [feedback, setFeedback] = useState<AuthFeedback | null>(null);
 
   const [submit, isPending] = useAsyncAction(
     async (data: { pseudonym: string; email: string; password: string }) => {
-      setError(null);
-      setEmailTaken(false);
+      setFeedback(null);
 
-      // Catch the most common failure early with a clear, specific message.
-      const existing = await Authentication.doesEmailExist({
-        email: data.email,
-      });
-      if (existing.success && existing.data) {
-        setEmailTaken(true);
-        setError("That email already has a chillpen account.");
-        return;
-      }
-
-      const result = await Authentication.signUp(data);
-      if (!result.success) {
-        const message = result.error?.message ?? "";
-        if (/email/i.test(message)) {
-          setEmailTaken(true);
-          setError("That email already has a chillpen account.");
+      try {
+        const existing = await Authentication.doesEmailExist({
+          email: data.email.trim().toLowerCase(),
+        });
+        if (existing.success && existing.data) {
+          setFeedback({
+            message: "That email already has a chillpen account.",
+            hint: "sign-in",
+          });
           return;
         }
-        setError(
-          /pseudonym/i.test(message)
-            ? "That pseudonym is already taken — try another."
-            : "Could not create your account. Try a different pseudonym or email.",
-        );
-        return;
+
+        const result = await Authentication.signUp({
+          pseudonym: data.pseudonym.trim(),
+          email: data.email.trim().toLowerCase(),
+          password: data.password,
+        });
+
+        if (!result.success) {
+          setFeedback(signUpFeedback(result.error));
+          return;
+        }
+
+        if (result.data.verified) {
+          router.push("/sign-up/payment");
+          router.refresh();
+          return;
+        }
+
+        setSent(true);
+      } catch {
+        setFeedback({
+          message:
+            "Something went wrong while creating your account. Try again.",
+        });
       }
-      // Verified inline (no email gate) → continue to the payment step.
-      if (result.data.verified) {
-        router.push("/sign-up/payment");
-        return;
-      }
-      setSent(true);
     },
   );
 
@@ -91,7 +97,7 @@ export const SignUpForm = () => {
           Check your email
         </h2>
         <p className="mt-1 font-body text-foreground-dimmed text-sm">
-          Verify your address, then{" "}
+          We sent a verification link. After you verify,{" "}
           <Link href="/sign-in" className="text-primary">
             sign in
           </Link>{" "}
@@ -102,36 +108,14 @@ export const SignUpForm = () => {
 
   return (
     <InferredForm config={config} onSubmit={submit}>
-      {error ? (
-        <div className="rounded-md border border-error/30 bg-error/10 px-3 py-2 font-subtitle text-error text-sm">
-          <p>{error}</p>
-          {emailTaken ? (
-            <p className="mt-1 text-foreground-dimmed">
-              <Link
-                href="/sign-in"
-                className="text-primary hover:text-primary-rich"
-              >
-                Sign in
-              </Link>{" "}
-              or{" "}
-              <Link
-                href="/forgot-password"
-                className="text-primary hover:text-primary-rich"
-              >
-                reset your password
-              </Link>
-              .
-            </p>
-          ) : null}
-        </div>
-      ) : null}
+      <AuthAlert feedback={feedback} />
       <Button
         type="submit"
         color="primary"
         disabled={isPending}
         className="w-full"
       >
-        Create account
+        {isPending ? "Creating account…" : "Create account"}
       </Button>
       <p className="text-center font-subtitle text-foreground-dimmed text-sm">
         Have an account?{" "}

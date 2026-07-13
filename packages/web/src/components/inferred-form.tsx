@@ -360,7 +360,7 @@ export const InferredForm = <
     <Form
       className={className}
       onBlur={(event) => onBlur?.(event, form)}
-      onSubmit={form.handleSubmit(() => onSubmit?.(form.getValues()))}
+      onSubmit={form.handleSubmit((values) => onSubmit?.(values))}
       form={form}
     >
       {Object.entries(config).map(([key, field]) => (
@@ -377,7 +377,7 @@ export namespace InferredForm {
   > = UseInferredFormParams<Form, Schema> & {
     children?: ReactNode;
     className?: string;
-    onSubmit?: (data: FormEntries<Form>) => void;
+    onSubmit?: (data: FormEntries<Form>) => void | Promise<void>;
     onBlur?: (
       event: FocusEvent<HTMLFormElement, Element>,
       form: UseFormReturn<FormEntries<Form>>,
