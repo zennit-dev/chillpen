@@ -20,7 +20,7 @@ export const organizationSchema = {
   "@type": "Organization",
   name: seo.name,
   url: seo.host,
-  logo: absoluteUrl("/icon"),
+  logo: absoluteUrl("/logo-mark.png"),
   description: seo.description,
   sameAs: [...seo.links],
 } as const;

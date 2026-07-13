@@ -13,16 +13,16 @@ export const Logo = ({ className }: Logo.Props) => (
     aria-label="chillpen.club"
     className={cn("inline-flex items-center gap-2", className)}
   >
-    {/* biome-ignore lint/performance/noImgElement: small static SVG brand mark — nothing to optimize, and next/image rejects raw SVGs by default */}
+    {/* biome-ignore lint/performance/noImgElement: small static brand mark — nothing to optimize */}
     <img
-      src="/mark.svg"
+      src="/logo-mark.png"
       alt=""
       width={28}
       height={28}
-      className="size-7 shrink-0"
+      className="size-7 shrink-0 rounded-md"
     />
     <span className="font-display font-semibold text-foreground text-lg tracking-tight">
-      chillpen<span className="text-foreground-dimmed">.club</span>
+      chillpen<span className="text-primary">.club</span>
     </span>
   </Link>
 );
