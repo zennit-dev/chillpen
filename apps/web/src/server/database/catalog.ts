@@ -19,7 +19,21 @@ export type CatalogUniverse = {
   body: string;
 };
 
-const cover = (slug: string) => `/covers/${slug}.jpg`;
+const cover = (slug: string) => {
+  // Hosted on UploadThing so production next/image works even when Vercel
+  // hasn't shipped apps/web/public/covers (same-origin /covers still 404s).
+  const hosted = {
+    "school-of-magic":
+      "https://u9rfstfdyc.ufs.sh/f/TPOQCADLHQ1yIkvrwbMMwtn4SaeipOHYsFzWKNdxZ9coIGmv",
+    "the-almost-love-club":
+      "https://u9rfstfdyc.ufs.sh/f/TPOQCADLHQ1yuwyJusPkBi12fhnIEHu7zSgLM56jGWKxoywF",
+    rikimaru:
+      "https://u9rfstfdyc.ufs.sh/f/TPOQCADLHQ1ySar7cHlOxWqsKpSvMDbCh7GkIaTV0iRjn4yF",
+    "the-norwegian-beast":
+      "https://u9rfstfdyc.ufs.sh/f/TPOQCADLHQ1y119iRQjL6r85FVWqQ1YGydc2AwRKhSn4tlb3",
+  } as const;
+  return hosted[slug as keyof typeof hosted] ?? `/covers/${slug}.jpg`;
+};
 
 /** Manuscript universes from the chillpen prototype — full first-chapter texts. */
 export const CATALOG_UNIVERSES: CatalogUniverse[] = [
