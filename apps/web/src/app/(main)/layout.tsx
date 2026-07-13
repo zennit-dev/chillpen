@@ -19,6 +19,7 @@ export default async ({ children }: LayoutProps<"/">) => {
         coins: account.coins,
         avatar: account.avatarConfig?.preset ?? null,
         image: account.image ?? null,
+        isAdmin: account.role === "admin",
       }
     : null;
   const navGenres: NavGenre[] = genres.success

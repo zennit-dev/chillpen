@@ -12,7 +12,7 @@ import { withAuthentication } from "../utils/authentication";
 import { withContext } from "../utils/context";
 import { Environment } from "../utils/environment";
 import { InvalidCredentialsError } from "../utils/error";
-import { sign, verify } from "../utils/signature";
+import { sign } from "../utils/signature";
 import * as User from "./user";
 
 // TODO: use betterAuth client instead of server actions (default redirection)
@@ -185,9 +185,21 @@ export const signIn = withContext(
       });
 
       const jar = await cookies();
-      setUserCookie(jar, response.user as User.Type);
+      const profile = await User.get(Environment.SERVER, response.user.id);
+      setUserCookie(
+        jar,
+        profile.success && profile.data
+          ? profile.data
+          : (response.user as User.Type),
+      );
 
-      return { success: true as const, data: response.user };
+      return {
+        success: true as const,
+        data:
+          profile.success && profile.data
+            ? profile.data
+            : (response.user as User.Type),
+      };
     } catch (error) {
       if (isAPIError(error)) {
         const code = error.body?.code;
@@ -278,32 +290,25 @@ export const forgotPassword = withContext(
 
 export const getProxiedCurrentUser = withContext(async (context) => {
   const jar = await cookies();
-  const cached = jar.get("user")?.value;
-  // The signed "user" cookie is only a render-time cache of the profile — it is
-  // NOT proof of authentication. Trust it only while a real better-auth session
-  // cookie is present (`__Secure-better-auth.session_token` over HTTPS,
-  // `better-auth.session_token` in dev). Otherwise a session that was cleared,
-  // expired, or predates the nextCookies fix would leave the user "logged in"
-  // for page guards but Unauthenticated for every server action (publishing a
-  // book/chapter, liking, following…). Falling through to getSession returns
-  // null in that case, so guards redirect to /sign-in and a fresh login
-  // re-establishes the session — self-healing the desync.
+  // The signed "user" cookie is only a render-time cache — never trust it as
+  // the source of truth. Better Auth's session cookie proves auth; we always
+  // load the full profile (including role) from the DB so admin access and nav
+  // stay correct after role changes or older logins that cached a partial user.
   const hasSessionCookie = jar
     .getAll()
     .some((cookie) => cookie.name.includes("session_token"));
-  const payload =
-    cached && hasSessionCookie
-      ? verify(cached, process.env.BETTER_AUTH_SECRET as string)
-      : null;
-  const parsed =
-    payload !== null ? resultify(() => JSON.parse(payload) as User.Type) : null;
-  if (parsed?.success) return { success: true, data: parsed.data };
+
+  if (!hasSessionCookie) {
+    jar.delete("user");
+    return { success: false, error: new Error("user-not-found") };
+  }
 
   const session = await context.auth.getSession({
     headers: await headers(),
   });
 
   if (!session) {
+    jar.delete("user");
     return { success: false, error: new Error("user-not-found") };
   }
 

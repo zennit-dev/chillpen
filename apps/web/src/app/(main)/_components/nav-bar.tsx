@@ -37,6 +37,7 @@ export type NavUser = {
   coins: number;
   avatar?: string | null;
   image?: string | null;
+  isAdmin?: boolean;
 };
 
 export type NavGenre = {
@@ -108,6 +109,9 @@ export const NavBar = ({ user, genres = [] }: NavBar.Props) => {
   const [genresOpen, setGenresOpen] = useState(false);
   const pathname = usePathname();
   const browseGenres = genres.length > 0 ? genres : fallbackGenres;
+  const navLinks = user?.isAdmin
+    ? [...links, { href: "/admin" as const, label: "Admin" }]
+    : links;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: close menus on navigation
   useEffect(() => {
@@ -120,7 +124,7 @@ export const NavBar = ({ user, genres = [] }: NavBar.Props) => {
       <nav className="mx-auto flex h-[68px] max-w-7xl items-center gap-5 px-4 sm:px-6">
         <Logo />
         <div className="hidden items-center gap-1 md:flex">
-          {links.map((link) => (
+          {navLinks.map((link) => (
             <NavLink
               key={link.href}
               href={link.href}
@@ -129,6 +133,7 @@ export const NavBar = ({ user, genres = [] }: NavBar.Props) => {
                   ? pathname === "/discover"
                   : pathname.startsWith(link.href)
               }
+              highlight={link.href === "/admin"}
             >
               {link.label}
             </NavLink>
@@ -264,11 +269,16 @@ export const NavBar = ({ user, genres = [] }: NavBar.Props) => {
       {open ? (
         <div className="max-h-[70vh] space-y-4 overflow-y-auto border-white/8 border-t bg-background-rich px-4 py-4 md:hidden">
           <div className="flex flex-col gap-1">
-            {links.map((link) => (
+            {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="rounded-md px-1 py-1.5 font-medium text-foreground-rich text-sm"
+                className={cn(
+                  "rounded-md px-1 py-1.5 font-medium text-sm",
+                  link.href === "/admin"
+                    ? "text-primary"
+                    : "text-foreground-rich",
+                )}
               >
                 {link.label}
               </Link>
@@ -320,6 +330,12 @@ const accountLinks = [
   { href: "/me/settings", label: "Account settings", icon: SlidersIcon },
   { href: "/help", label: "Help", icon: HelpIcon },
 ] as const;
+
+const adminLink = {
+  href: "/admin",
+  label: "Admin",
+  icon: SlidersIcon,
+} as const;
 
 const AccountMenu = ({ user }: { user: NavUser }) => {
   const router = useRouter();
@@ -387,6 +403,16 @@ const AccountMenu = ({ user }: { user: NavUser }) => {
             </div>
             <div className="my-1.5 h-px bg-white/8" />
             <div className="flex flex-col">
+              {user.isAdmin ? (
+                <Link
+                  href={adminLink.href}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2.5 rounded-lg bg-primary/10 px-2.5 py-2 font-subtitle text-primary text-sm no-underline transition hover:bg-primary/15"
+                >
+                  <adminLink.icon className="size-4" />
+                  {adminLink.label}
+                </Link>
+              ) : null}
               {accountLinks.map((link) => {
                 const Icon = link.icon;
                 return (
@@ -422,19 +448,23 @@ const AccountMenu = ({ user }: { user: NavUser }) => {
 const NavLink = ({
   href,
   active,
+  highlight,
   children,
 }: {
   href: string;
   active: boolean;
+  highlight?: boolean;
   children: ReactNode;
 }) => (
   <Link
     href={href}
     className={cn(
       "rounded-md px-2.5 py-1.5 font-medium font-subtitle text-sm transition-colors",
-      active
-        ? "bg-white/5 text-foreground"
-        : "text-foreground-dimmed hover:text-foreground",
+      highlight
+        ? "bg-primary/15 text-primary"
+        : active
+          ? "bg-white/5 text-foreground"
+          : "text-foreground-dimmed hover:text-foreground",
     )}
   >
     {children}
