@@ -1,9 +1,10 @@
 import { resultify } from "@zenncore/utils";
 import { redirect } from "next/navigation";
+import { CoinIcon } from "@/components/icons";
 import * as Authentication from "@/server/app/authentication";
-import * as Cosmetic from "@/server/app/cosmetic";
+import * as AvatarStudio from "@/server/app/avatar-studio";
 import { Environment } from "@/server/utils/environment";
-import { AvatarStudio } from "./_components/avatar-studio";
+import { AvatarStudioPanel } from "./_components/avatar-studio";
 
 export const metadata = { title: "Avatar Studio" };
 
@@ -15,31 +16,33 @@ export default async () => {
     proxied.success && proxied.data.success ? proxied.data.data : null;
   if (!user) redirect("/sign-in");
 
-  const [shop, inventory] = await Promise.all([
-    Cosmetic.shop(Environment.SERVER),
-    resultify(() => Cosmetic.inventory(Environment.SERVER)),
-  ]);
+  const wallet = await resultify(() => AvatarStudio.wallet(Environment.SERVER));
+  if (!wallet.success || !wallet.data.success) redirect("/me");
 
   return (
     <main className="px-4 pt-28 pb-20 sm:px-6">
-      <div className="mx-auto max-w-5xl">
-        <header className="mb-8">
-          <h1 className="font-display font-semibold text-3xl text-foreground">
-            Avatar Studio
-          </h1>
-          <p className="mt-2 font-body text-foreground-dimmed">
-            Spend coins, equip cosmetics, and flex the rare items you've won.
-          </p>
+      <div className="mx-auto max-w-6xl">
+        <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="font-subtitle text-2xs text-primary uppercase tracking-[0.2em]">
+              Identity
+            </p>
+            <h1 className="mt-1 font-display font-semibold text-3xl text-foreground">
+              Avatar studio
+            </h1>
+            <p className="mt-2 font-body text-foreground-dimmed">
+              Write. Earn coins. Unlock. Customize. Express you.
+            </p>
+          </div>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 font-medium font-subtitle text-primary text-sm">
+            <CoinIcon className="size-4" />
+            {wallet.data.data.coins}
+          </span>
         </header>
 
-        <AvatarStudio
-          coins={user.coins}
-          shop={shop.success ? shop.data : []}
-          owned={
-            inventory.success && inventory.data.success
-              ? inventory.data.data
-              : []
-          }
+        <AvatarStudioPanel
+          pseudonym={user.pseudonym ?? user.name}
+          wallet={wallet.data.data}
         />
       </div>
     </main>

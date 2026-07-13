@@ -77,21 +77,28 @@ export const updateAvatar = withAuthentication(
   "User.updateAvatar",
 );
 
-// Set the starter avatar preset while preserving any equipped cosmetics.
 export const setAvatarPreset = withAuthentication(
   async (context, preset: string) => {
     const account = await get(Environment.SERVER, context.session.user.id);
     if (!account.success) return account;
+
+    const ownedAvatars = new Set([
+      "bird",
+      ...(account.data?.avatarConfig?.ownedAvatars ?? []),
+    ]);
+    ownedAvatars.add(preset);
+
     const avatarConfig: AvatarConfig = {
       ...(account.data?.avatarConfig ?? {}),
       preset,
+      ownedAvatars: [...ownedAvatars],
     };
     const result = await update(Environment.SERVER, context.session.user.id, {
       avatarConfig,
     });
-    // Refresh the surfaces that render the avatar (nav, dashboard, profile).
     revalidatePath("/me");
     revalidatePath("/me/settings");
+    revalidatePath("/me/avatar");
     return result;
   },
   "User.setAvatarPreset",

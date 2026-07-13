@@ -1,6 +1,11 @@
 import { db, schema } from "./index";
 import type { LeaderboardEntry } from "./schema";
-import { ADMIN_EMAIL, ADMIN_PASSWORD, seedAdminAuth } from "./seed-admin-auth";
+import {
+  ADMIN_EMAIL,
+  ADMIN_PASSWORD,
+  seedAdminAuth,
+} from "./seed-admin-auth";
+import { seedAvatarWallets } from "./seed-avatar-wallets";
 import { seedCatalog } from "./seed-catalog";
 import { seedModerationDemo } from "./seed-moderation-demo";
 import { purgeLegacyUniverses } from "./seed-purge-legacy";
@@ -211,10 +216,15 @@ const seed = async () => {
         role: entry.role,
         coins: entry.coins,
         bio: entry.bio,
-        avatarConfig:
-          "avatarPreset" in entry && entry.avatarPreset
-            ? { preset: entry.avatarPreset }
-            : {},
+        avatarConfig: {
+          preset:
+            "avatarPreset" in entry && entry.avatarPreset
+              ? entry.avatarPreset
+              : "bird",
+          ownedAvatars: ["bird"],
+          ownedItems: [],
+          equipped: {},
+        },
         subscriptionStatus: "active",
         badges:
           entry.role === "admin"
@@ -255,6 +265,8 @@ const seed = async () => {
     .onConflictDoNothing();
 
   await seedAdminAuth();
+  const wallets = await seedAvatarWallets();
+  console.log(`Synced avatar wallets for ${wallets} users.`);
   console.log(
     `Admin login: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD} (sign in at /sign-in, then /admin)`,
   );
