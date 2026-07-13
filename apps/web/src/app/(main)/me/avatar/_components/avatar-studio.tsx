@@ -10,7 +10,9 @@ import {
   AVATAR_ITEMS,
   ITEM_CATEGORIES,
   SLOT_LABELS,
+  equippedCatalog,
   itemUnlocked,
+  requiredAvatarName,
   tierColor,
   type AvatarItem,
 } from "@/lib/avatar-catalog";
@@ -34,10 +36,7 @@ export const AvatarStudioPanel = ({
 
   const base = AVATAR_BASES.find((entry) => entry.id === preset) ?? AVATAR_BASES[0];
 
-  const worn = useMemo(
-    () => AvatarStudio.equippedCatalog(equipped),
-    [equipped],
-  );
+  const worn = useMemo(() => equippedCatalog(equipped), [equipped]);
 
   const pool = useMemo(() => {
     const source = collection
@@ -85,7 +84,7 @@ export const AvatarStudioPanel = ({
         case "avatar-tier-locked":
           setShopError(
             catalog?.requires
-              ? `Requires the ${AvatarStudio.requiredAvatarName(catalog.requires)} avatar first.`
+              ? `Requires the ${requiredAvatarName(catalog.requires)} avatar first.`
               : "Unlock a higher base avatar to buy this item.",
           );
           break;
@@ -415,7 +414,7 @@ const ItemCard = ({
         </Button>
       ) : (
         <p className="py-2 text-center font-subtitle text-2xs text-foreground-dimmed">
-          🔒 Needs {AvatarStudio.requiredAvatarName(item.requires)}
+          🔒 Needs {requiredAvatarName(item.requires)}
         </p>
       )}
     </div>

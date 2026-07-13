@@ -118,6 +118,21 @@ export const tierColor = (tier: string) => {
   }
 };
 
+export const requiredAvatarName = (requires: string | null) => {
+  if (!requires) return null;
+  return AVATAR_BASES[avatarRank(requires)]?.name ?? requires;
+};
+
+export const equippedCatalog = (
+  equipped: Record<string, string>,
+): { slot: string; item: AvatarItem }[] =>
+  Object.entries(equipped)
+    .map(([slot, id]) => {
+      const item = AVATAR_ITEMS.find((entry) => entry.id === id);
+      return item ? { slot, item } : null;
+    })
+    .filter((entry): entry is { slot: string; item: AvatarItem } => !!entry);
+
 export const SLOT_LABELS = {
   head: "head",
   eyes: "eyes",
