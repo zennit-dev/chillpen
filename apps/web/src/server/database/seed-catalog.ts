@@ -1,6 +1,6 @@
 import { eq, sql } from "drizzle-orm";
-import { db, schema } from "./index";
 import { CATALOG_UNIVERSES } from "./catalog";
+import { db, schema } from "./index";
 
 const countWords = (body: string): number =>
   body.trim().split(/\s+/).filter(Boolean).length;
@@ -25,7 +25,10 @@ export const seedCatalog = async () => {
     const wordCount = countWords(entry.body);
 
     const existing = await db
-      .select({ id: schema.universe.id, rootChapterId: schema.universe.rootChapterId })
+      .select({
+        id: schema.universe.id,
+        rootChapterId: schema.universe.rootChapterId,
+      })
       .from(schema.universe)
       .where(eq(schema.universe.slug, entry.slug))
       .limit(1);

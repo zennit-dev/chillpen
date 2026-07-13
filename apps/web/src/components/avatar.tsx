@@ -6,7 +6,12 @@ import { cn } from "@zenncore/utils";
 export const AVATAR_PRESETS = [
   { id: "bird", label: "Bird", file: "bird.png", head: "bird-head.png" },
   { id: "fox", label: "Fox", file: "fox.png", head: "fox-head.png" },
-  { id: "octopus", label: "Octopus", file: "octopus.png", head: "octopus-head.png" },
+  {
+    id: "octopus",
+    label: "Octopus",
+    file: "octopus.png",
+    head: "octopus-head.png",
+  },
   { id: "owl", label: "Owl", file: "owl.png", head: "owl-head.png" },
   { id: "alien", label: "Alien", file: "alien.png", head: "alien-head.png" },
 ] as const;

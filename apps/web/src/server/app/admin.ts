@@ -2,7 +2,7 @@
 
 import { and, eq, inArray, isNull, ne, or } from "drizzle-orm";
 import { unique } from "@/utils/array";
-import { schema, withTransaction, type TransactionScope } from "../database";
+import { schema, type TransactionScope, withTransaction } from "../database";
 import { withAuthorization } from "../utils/authorization";
 import { Environment } from "../utils/environment";
 import { repository } from "../utils/repository";
@@ -41,9 +41,15 @@ export const dashboard = withAuthorization(
   async () => {
     const [users, stories, approved, pending, trials] = await Promise.all([
       User.count(Environment.SERVER),
-      Universe.count(Environment.SERVER, eq(schema.universe.status, "published")),
+      Universe.count(
+        Environment.SERVER,
+        eq(schema.universe.status, "published"),
+      ),
       Chapter.count(Environment.SERVER, eq(schema.chapter.status, "approved")),
-      queue.count(Environment.SERVER, eq(schema.moderationQueue.status, "pending")),
+      queue.count(
+        Environment.SERVER,
+        eq(schema.moderationQueue.status, "pending"),
+      ),
       User.count(
         Environment.SERVER,
         eq(schema.user.subscriptionStatus, "trial"),
@@ -266,7 +272,10 @@ export const approveUniverse = withAuthorization(
     const entry = await Universe.get(Environment.SERVER, id);
     if (!entry.success) return entry;
     if (!entry.data)
-      return { success: false as const, error: new Error("universe-not-found") };
+      return {
+        success: false as const,
+        error: new Error("universe-not-found"),
+      };
     if (!entry.data.rootChapterId)
       return {
         success: false as const,
@@ -329,7 +338,10 @@ export const rejectUniverse = withAuthorization(
     const entry = await Universe.get(Environment.SERVER, id);
     if (!entry.success) return entry;
     if (!entry.data)
-      return { success: false as const, error: new Error("universe-not-found") };
+      return {
+        success: false as const,
+        error: new Error("universe-not-found"),
+      };
 
     return withTransaction(async (tx: TransactionScope) => {
       const rejected = await Universe.update(

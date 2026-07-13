@@ -398,9 +398,12 @@ export const createUniverse = withAuthentication(
     if (!created.success)
       return {
         success: false as const,
-        error: new Error("We couldn't publish your universe. Please try again.", {
-          cause: created.error,
-        }),
+        error: new Error(
+          "We couldn't publish your universe. Please try again.",
+          {
+            cause: created.error,
+          },
+        ),
       };
     return { success: true as const, data: created.data };
   },

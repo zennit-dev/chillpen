@@ -26,7 +26,9 @@ export const AdminPanel = ({
   const [toast, setToast] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [featured, setFeatured] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(stories.map((story) => [story.id, story.featuredEnabled])),
+    Object.fromEntries(
+      stories.map((story) => [story.id, story.featuredEnabled]),
+    ),
   );
   const [universeRows, setUniverseRows] = useState(pendingUniverses);
   const [chapterRows, setChapterRows] = useState(pendingChapters);
@@ -114,7 +116,10 @@ export const AdminPanel = ({
     });
     if (!result.success)
       setFeatured((current) => ({ ...current, [story.id]: !next }));
-    else setToast(next ? `Featured "${story.title}".` : `Unfeatured "${story.title}".`);
+    else
+      setToast(
+        next ? `Featured "${story.title}".` : `Unfeatured "${story.title}".`,
+      );
   };
 
   return (
@@ -192,8 +197,8 @@ export const AdminPanel = ({
                       {entry.title}
                     </p>
                     <p className="font-subtitle text-foreground-dimmed text-xs">
-                      new universe · by {entry.author ?? "—"} · {entry.wordCount}{" "}
-                      words
+                      new universe · by {entry.author ?? "—"} ·{" "}
+                      {entry.wordCount} words
                     </p>
                   </div>
                   <span className="font-subtitle text-2xs text-primary uppercase tracking-wider">
@@ -242,8 +247,8 @@ export const AdminPanel = ({
                       {entry.title}
                     </p>
                     <p className="font-subtitle text-foreground-dimmed text-xs">
-                      by {entry.authorName ?? "—"} · {entry.universeTitle ?? "—"} ·{" "}
-                      {entry.wordCount} words
+                      by {entry.authorName ?? "—"} ·{" "}
+                      {entry.universeTitle ?? "—"} · {entry.wordCount} words
                     </p>
                   </div>
                   <Button
@@ -351,7 +356,9 @@ export const AdminPanel = ({
               </Link>
               <span>{writer.chapters}</span>
               <span>{writer.reads.toLocaleString()}</span>
-              <span className="text-primary">{writer.likes.toLocaleString()}</span>
+              <span className="text-primary">
+                {writer.likes.toLocaleString()}
+              </span>
             </div>
           ))}
         </div>
