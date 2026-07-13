@@ -1,5 +1,6 @@
 import { db, schema } from "./index";
 import type { LeaderboardEntry } from "./schema";
+import { ADMIN_EMAIL, ADMIN_PASSWORD, seedAdminAuth } from "./seed-admin-auth";
 import { seedCatalog } from "./seed-catalog";
 import { seedModerationDemo } from "./seed-moderation-demo";
 import { purgeLegacyUniverses } from "./seed-purge-legacy";
@@ -252,6 +253,11 @@ const seed = async () => {
       })),
     )
     .onConflictDoNothing();
+
+  await seedAdminAuth();
+  console.log(
+    `Admin login: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD} (sign in at /sign-in, then /admin)`,
+  );
 
   const catalogCount = await seedCatalog();
   console.log(`Catalog upserted ${catalogCount} manuscript universes.`);
