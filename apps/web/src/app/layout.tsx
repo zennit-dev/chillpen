@@ -50,6 +50,10 @@ export const metadata: Metadata = {
     title: seo.name,
     statusBarStyle: "black-translucent",
   },
+  icons: {
+    icon: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default ({ children }: Readonly<{ children: ReactNode }>) => (

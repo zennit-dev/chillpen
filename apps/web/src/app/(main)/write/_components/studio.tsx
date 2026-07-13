@@ -52,20 +52,25 @@ export const Studio = ({
   preselectedUniverse,
   preselectedParent,
   preselectedChapters = [],
+  existingChapter,
 }: Studio.Props) => {
   const router = useRouter();
 
   const [mode, setMode] = useState<"continue" | "new">(
-    preselectedUniverse || preselectedParent || universes.length > 0
+    existingChapter || preselectedUniverse || preselectedParent || universes.length > 0
       ? "continue"
       : "new",
   );
 
   // continue-a-universe state
-  const [universe, setUniverse] = useState(preselectedUniverse ?? "");
+  const [universe, setUniverse] = useState(
+    existingChapter?.universe ?? preselectedUniverse ?? "",
+  );
   const [chapters, setChapters] =
     useState<StudioChapter[]>(preselectedChapters);
-  const [parent, setParent] = useState(preselectedParent ?? "");
+  const [parent, setParent] = useState(
+    existingChapter?.parent ?? preselectedParent ?? "",
+  );
   const [loadingChapters, setLoadingChapters] = useState(false);
 
   // new-universe state
@@ -78,9 +83,9 @@ export const Studio = ({
   const coverInput = useRef<HTMLInputElement>(null);
 
   // shared chapter state
-  const [chapterTitle, setChapterTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [summary, setSummary] = useState("");
+  const [chapterTitle, setChapterTitle] = useState(existingChapter?.title ?? "");
+  const [body, setBody] = useState(existingChapter?.body ?? "");
+  const [summary, setSummary] = useState(existingChapter?.summary ?? "");
   const [error, setError] = useState<string | null>(null);
   const [previewing, setPreviewing] = useState(false);
 
@@ -155,7 +160,7 @@ export const Studio = ({
       }
 
       if (mode === "continue") {
-        if (!universe || !parent) {
+        if (!existingChapter && (!universe || !parent)) {
           setError("Pick a universe and the chapter you're continuing from.");
           return;
         }
@@ -170,24 +175,34 @@ export const Studio = ({
             return;
           }
         }
-        const created = await Chapter.fork({
-          parent,
-          title: chapterTitle,
-          body,
-          summary: summary || undefined,
-        });
-        if (!created.success) {
+        const chapter = await (async () => {
+          if (existingChapter)
+            return Chapter.saveDraft({
+              chapter: existingChapter.id,
+              title: chapterTitle,
+              body,
+              summary: summary || undefined,
+            });
+          const created = await Chapter.fork({
+            parent,
+            title: chapterTitle,
+            body,
+            summary: summary || undefined,
+          });
+          if (!created.success) return created;
+          return { success: true as const, data: created.data };
+        })();
+        if (!chapter.success || !chapter.data) {
           setError(
-            publishMessage(created.error?.message) ??
-              "Could not save your chapter. Try again.",
+            (!chapter.success
+              ? publishMessage(chapter.error?.message)
+              : null) ?? "Could not save your chapter. Try again.",
           );
           return;
         }
-        // Surface the outcome instead of silently redirecting — this is why
-        // "publish for review" appeared to do nothing before.
         if (action === "submit") {
           const submitted = await Chapter.submitForApproval({
-            chapter: created.data.id,
+            chapter: chapter.data.id,
           });
           if (!submitted.success) {
             setError(
@@ -569,12 +584,22 @@ export const Studio = ({
 };
 
 export namespace Studio {
+  export type ExistingChapter = {
+    id: string;
+    universe: string;
+    parent: string | null;
+    title: string;
+    body: string;
+    summary: string | null;
+  };
+
   export type Props = {
     genres: StudioGenre[];
     universes: StudioUniverse[];
     preselectedUniverse?: string;
     preselectedParent?: string;
     preselectedChapters?: StudioChapter[];
+    existingChapter?: ExistingChapter;
   };
 }
 
