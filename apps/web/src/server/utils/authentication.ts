@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import type * as Session from "@/server/app/session";
-import type * as User from "@/server/app/user";
+import * as User from "@/server/app/user";
 import {
   type ContextedAction,
   defineWithContext,
@@ -8,12 +8,19 @@ import {
   type GenericContext,
   type WithContextParams,
 } from "./context";
+import { Environment } from "./environment";
 import { UnauthenticatedError } from "./error";
 
 export type AuthenticatedContext = GenericContext & {
   session: { user: User.Type; session: Session.Type };
 };
 
+/**
+ * Prefer the Drizzle user row over better-auth's session.user payload.
+ * Custom columns like `role` can be missing from the Better Auth session
+ * snapshot — which silently failed every `withAuthorization(["admin"])` gate
+ * (admin panel bounced to `/` even for a real admin).
+ */
 export const authenticate: Enhancer<
   GenericContext,
   AuthenticatedContext,
@@ -29,15 +36,24 @@ export const authenticate: Enhancer<
       error: new UnauthenticatedError("Unauthenticated"),
     };
 
+  const profile = await User.get(Environment.SERVER, session.user.id);
+  if (!profile.success || !profile.data)
+    return {
+      success: false,
+      error: new UnauthenticatedError("Unauthenticated"),
+    };
+
   base.span.setAttribute("session.id", session.session.id);
-  base.span.setAttribute("session.user.id", session.user.id);
+  base.span.setAttribute("session.user.id", profile.data.id);
+  if (profile.data.role)
+    base.span.setAttribute("session.user.role", profile.data.role);
 
   return {
     success: true,
     data: {
       ...base,
       session: {
-        user: session.user as User.Type,
+        user: profile.data,
         session: session.session as Session.Type,
       },
     },

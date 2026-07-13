@@ -12,7 +12,7 @@ import { withAuthentication } from "../utils/authentication";
 import { withContext } from "../utils/context";
 import { Environment } from "../utils/environment";
 import { InvalidCredentialsError } from "../utils/error";
-import { sign, verify } from "../utils/signature";
+import { sign } from "../utils/signature";
 import * as User from "./user";
 
 // TODO: use betterAuth client instead of server actions (default redirection)
@@ -290,9 +290,9 @@ export const forgotPassword = withContext(
 
 export const getProxiedCurrentUser = withContext(async (context) => {
   const jar = await cookies();
-  // Read-only in Server Components — never mutate cookies here (Next.js only
-  // allows writes in Server Actions / Route Handlers). The signed "user" cookie
-  // is a cache; use it only when it includes our custom fields (e.g. role).
+  // Read-only in Server Components — never mutate cookies here. Always load the
+  // full Drizzle profile (including `role`) so Admin nav /admin gate stay
+  // correct. The signed "user" cookie is only written from server actions.
   const hasSessionCookie = jar
     .getAll()
     .some((cookie) => cookie.name.includes("session_token"));
@@ -307,16 +307,6 @@ export const getProxiedCurrentUser = withContext(async (context) => {
 
   if (!session) {
     return { success: false, error: new Error("user-not-found") };
-  }
-
-  const cached = jar.get("user")?.value;
-  const payload = cached
-    ? verify(cached, process.env.BETTER_AUTH_SECRET as string)
-    : null;
-  const parsed =
-    payload !== null ? resultify(() => JSON.parse(payload) as User.Type) : null;
-  if (parsed?.success && parsed.data.role !== undefined) {
-    return { success: true, data: parsed.data };
   }
 
   const user = await User.get(Environment.SERVER, session.user.id);
@@ -407,7 +397,6 @@ export const signUp = withContext(
           email,
           password: payload.password,
           callbackURL: `${process.env.APP_HOST}/verify/success`,
-          role: "user",
         },
       });
 
@@ -418,6 +407,7 @@ export const signUp = withContext(
 
       await User.update(Environment.SERVER, response.user.id, {
         pseudonym,
+        role: "user",
         subscriptionStatus: "trial",
         trialEndsAt: new Date(Date.now() + TRIAL_MS),
         avatarConfig: {

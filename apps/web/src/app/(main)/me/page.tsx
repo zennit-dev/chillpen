@@ -81,6 +81,14 @@ export default async () => {
               <CoinIcon className="size-4" />
               {formatCount(user.coins)}
             </span>
+            {user.role === "admin" ? (
+              <Link
+                href="/admin"
+                className="rounded-[4px] border border-primary/40 bg-primary/10 px-4 py-2 font-medium font-subtitle text-primary text-sm transition hover:bg-primary/15"
+              >
+                Admin panel
+              </Link>
+            ) : null}
             {user.pseudonym ? (
               <Link
                 href={`/u/${user.pseudonym}`}

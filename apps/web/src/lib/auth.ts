@@ -53,7 +53,14 @@ export const auth = betterAuth({
   user: {
     additionalFields: {
       surname: { type: "string", required: true },
-      role: { type: "string", required: false, defaultValue: "user" },
+      // Must be returned on session.user — admin gates (`withAuthorization`)
+      // and nav `isAdmin` depend on it. `input: false` so signup can't self-elect.
+      role: {
+        type: "string",
+        required: false,
+        defaultValue: "user",
+        input: false,
+      },
       jobTitle: { type: "string", required: false },
       company: { type: "string", required: false },
       source: { type: "string", required: false },

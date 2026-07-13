@@ -40,7 +40,11 @@ export default async () => {
   const writersData =
     writers.success && writers.data.success ? writers.data.data : [];
 
-  if (!statsData) redirect("/");
+  // Authorization failed (missing role on session) — don't silently dump to /
+  // without distinguishing from "not signed in".
+  if (!statsData) {
+    redirect("/sign-in?error=admin-unauthorized");
+  }
 
   return (
     <main className="px-4 pt-28 pb-20 sm:px-6">
