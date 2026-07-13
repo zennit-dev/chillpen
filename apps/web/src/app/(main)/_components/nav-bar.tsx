@@ -340,6 +340,7 @@ const adminLink = {
 const AccountMenu = ({ user }: { user: NavUser }) => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const AdminIcon = adminLink.icon;
 
   const [logout, isLoggingOut] = useAsyncAction(async () => {
     await Authentication.signOut();
@@ -409,7 +410,7 @@ const AccountMenu = ({ user }: { user: NavUser }) => {
                   onClick={() => setOpen(false)}
                   className="flex items-center gap-2.5 rounded-lg bg-primary/10 px-2.5 py-2 font-subtitle text-primary text-sm no-underline transition hover:bg-primary/15"
                 >
-                  <adminLink.icon className="size-4" />
+                  <AdminIcon className="size-4" />
                   {adminLink.label}
                 </Link>
               ) : null}

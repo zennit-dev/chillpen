@@ -12,7 +12,7 @@ import { withAuthentication } from "../utils/authentication";
 import { withContext } from "../utils/context";
 import { Environment } from "../utils/environment";
 import { InvalidCredentialsError } from "../utils/error";
-import { sign } from "../utils/signature";
+import { sign, verify } from "../utils/signature";
 import * as User from "./user";
 
 // TODO: use betterAuth client instead of server actions (default redirection)
@@ -290,16 +290,14 @@ export const forgotPassword = withContext(
 
 export const getProxiedCurrentUser = withContext(async (context) => {
   const jar = await cookies();
-  // The signed "user" cookie is only a render-time cache — never trust it as
-  // the source of truth. Better Auth's session cookie proves auth; we always
-  // load the full profile (including role) from the DB so admin access and nav
-  // stay correct after role changes or older logins that cached a partial user.
+  // Read-only in Server Components — never mutate cookies here (Next.js only
+  // allows writes in Server Actions / Route Handlers). The signed "user" cookie
+  // is a cache; use it only when it includes our custom fields (e.g. role).
   const hasSessionCookie = jar
     .getAll()
     .some((cookie) => cookie.name.includes("session_token"));
 
   if (!hasSessionCookie) {
-    jar.delete("user");
     return { success: false, error: new Error("user-not-found") };
   }
 
@@ -308,16 +306,23 @@ export const getProxiedCurrentUser = withContext(async (context) => {
   });
 
   if (!session) {
-    jar.delete("user");
     return { success: false, error: new Error("user-not-found") };
+  }
+
+  const cached = jar.get("user")?.value;
+  const payload = cached
+    ? verify(cached, process.env.BETTER_AUTH_SECRET as string)
+    : null;
+  const parsed =
+    payload !== null ? resultify(() => JSON.parse(payload) as User.Type) : null;
+  if (parsed?.success && parsed.data.role !== undefined) {
+    return { success: true, data: parsed.data };
   }
 
   const user = await User.get(Environment.SERVER, session.user.id);
   if (!user.success) return user;
 
   if (!user.data) return { success: false, error: new Error("user-not-found") };
-
-  setUserCookie(jar, user.data);
 
   return user;
 }, "Authentication.getProxiedCurrentUser");
