@@ -18,6 +18,8 @@ import * as User from "./user";
 export const { get, paginate, create, update, destroy, exists, count, find } =
   repository(schema.universe);
 
+const queue = repository(schema.moderationQueue);
+
 export type Type = Document<typeof schema.universe>;
 
 export type AuthorRef = {
@@ -156,6 +158,22 @@ export const listFeatured = withContext(async () => {
   if (!universes.success) return universes;
   return { success: true as const, data: await decorate(universes.data) };
 }, "Universe.listFeatured");
+
+export const listPublished = withContext(
+  async (_, { size = 100 }: { size?: number } = {}) => {
+    const universes = await find(Environment.SERVER, {
+      where: eq(schema.universe.status, "published"),
+      orderBy: [
+        { column: schema.universe.featuredOrder, direction: "asc" },
+        { column: schema.universe.readCount, direction: "desc" },
+      ],
+      limit: size,
+    });
+    if (!universes.success) return universes;
+    return { success: true as const, data: await decorate(universes.data) };
+  },
+  "Universe.listPublished",
+);
 
 export const trending = withContext(
   async (_, { size = 12 }: { size?: number } = {}) => {
@@ -326,6 +344,7 @@ export const createUniverse = withAuthentication(
             genres: input.genres,
             tags: input.tags ?? [],
             originatingAuthorId: context.session.user.id,
+            status: "submitted",
           },
           { tx },
         );
@@ -345,11 +364,22 @@ export const createUniverse = withAuthentication(
               .trim()
               .split(/\s+/)
               .filter(Boolean).length,
-            status: "approved",
+            status: "submitted",
           },
           { tx },
         );
         if (!root.success) throw root.error;
+
+        const queued = await queue.create(
+          Environment.SERVER,
+          {
+            chapterId: root.data.id,
+            submittedBy: context.session.user.id,
+            status: "pending",
+          },
+          { tx },
+        );
+        if (!queued.success) throw queued.error;
 
         const finished = await update(
           Environment.SERVER,

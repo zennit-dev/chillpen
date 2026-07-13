@@ -1,4 +1,6 @@
 import { db, schema } from "./index";
+import { seedCatalog } from "./seed-catalog";
+import { seedModerationDemo } from "./seed-moderation-demo";
 import type { LeaderboardEntry } from "./schema";
 
 /**
@@ -69,7 +71,8 @@ const USERS = [
     pseudonym: "wanderer",
     role: "user",
     coins: 240,
-    bio: "Just here for the branches.",
+    bio: "Just here for the branches — and now writing my own.",
+    avatarPreset: "bird",
   },
 ] as const;
 
@@ -448,6 +451,10 @@ const seed = async () => {
         role: entry.role,
         coins: entry.coins,
         bio: entry.bio,
+        avatarConfig:
+          "avatarPreset" in entry && entry.avatarPreset
+            ? { preset: entry.avatarPreset }
+            : {},
         subscriptionStatus: "active",
         badges:
           entry.role === "admin"
@@ -718,6 +725,12 @@ const seed = async () => {
   console.log(
     `Seeded ${USERS.length} users, ${GENRES.length} genres, ${COSMETICS.length} cosmetics, ${UNIVERSES.length} universes.`,
   );
+
+  const catalogCount = await seedCatalog();
+  console.log(`Catalog upserted ${catalogCount} manuscript universes.`);
+
+  await seedModerationDemo();
+  console.log("Seeded demo moderation queue entries.");
 };
 
 seed()

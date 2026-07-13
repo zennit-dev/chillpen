@@ -10,6 +10,7 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "seed": "tsx src/server/database/seed.ts",
+    "seed:catalog": "tsx src/server/database/seed-catalog-runner.ts",
     "clean": "rm -rf .turbo .next node_modules"
   },
   "dependencies": {

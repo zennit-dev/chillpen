@@ -48,7 +48,7 @@ export const AvatarPicker = ({
               : "ring-1 ring-white/10 hover:ring-primary/50",
           )}
         >
-          <Avatar preset={preset.id} name={name} className="size-14" />
+          <Avatar preset={preset.id} name={name} className="size-14" variant="full" />
         </button>
       ))}
     </div>
