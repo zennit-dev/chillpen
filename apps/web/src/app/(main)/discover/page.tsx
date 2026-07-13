@@ -6,6 +6,7 @@ import { HeroSlider } from "@/components/hero-slider";
 import { TrophyIcon } from "@/components/icons";
 import { StoryCard, StoryCardSkeleton } from "@/components/story-card";
 import { Chip, formatCount, SectionHeader } from "@/components/ui";
+import { resolveMediaUrl } from "@/lib/assets";
 import { createMetadata } from "@/lib/seo";
 import * as Genre from "@/server/app/genre";
 import * as Leaderboard from "@/server/app/leaderboard";
@@ -108,7 +109,8 @@ const HeroSection = async () => {
     title: universe.title,
     hook: universe.featuredHook ?? universe.description ?? "",
     cover:
-      universe.cover ?? `https://picsum.photos/seed/${universe.slug}/1280/720`,
+      resolveMediaUrl(universe.cover) ??
+      `https://picsum.photos/seed/${universe.slug}/1280/720`,
     genre: universe.genreNames[0] ?? "Story",
     readCount: universe.readCount,
     forkCount: universe.forkCount,

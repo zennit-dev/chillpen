@@ -1,6 +1,7 @@
 import { cn } from "@zenncore/utils";
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
+import { resolveMediaUrl } from "@/lib/assets";
 
 /**
  * Small dark-luxury presentational primitives shared across surfaces.
@@ -15,7 +16,7 @@ export const Logo = ({ className }: Logo.Props) => (
   >
     {/* biome-ignore lint/performance/noImgElement: small static brand mark — nothing to optimize */}
     <img
-      src="/logo-mark.png"
+      src={resolveMediaUrl("/logo-mark.png") ?? "/logo-mark.png"}
       alt=""
       width={28}
       height={28}

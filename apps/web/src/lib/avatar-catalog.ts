@@ -1,5 +1,7 @@
 // Generated from chillpen zip data.js — avatar bases + item shop catalog.
 
+import { publicAsset } from "@/lib/assets";
+
 export type AvatarBase = {
   id: string;
   name: string;
@@ -23,11 +25,11 @@ export type AvatarItem = {
 };
 
 export const AVATAR_BASES = [
-  { id: "bird", name: "Bird", emoji: "🐤", image: "/avatars/bird.png", head: "/avatars/bird-head.png", tier: "Starter", price: 0, color: "#e8b45a", meaning: "Curious and positive. Perfect for beginners." },
-  { id: "fox", name: "Fox", emoji: "🦊", image: "/avatars/fox.png", head: "/avatars/fox-head.png", tier: "Tier 1", price: 1000, color: "#f97316", meaning: "Agile and clever. Always one step ahead." },
-  { id: "octopus", name: "Octopus", emoji: "🐙", image: "/avatars/octopus.png", head: "/avatars/octopus-head.png", tier: "Tier 2", price: 2000, color: "#a855f7", meaning: "Creative and adaptable. Many ideas, many ways." },
-  { id: "owl", name: "Owl", emoji: "🦉", image: "/avatars/owl.png", head: "/avatars/owl-head.png", tier: "Tier 3", price: 5000, color: "#d4a373", meaning: "Wise and observant. Knowledge is power." },
-  { id: "alien", name: "Alien", emoji: "👽", image: "/avatars/alien.png", head: "/avatars/alien-head.png", tier: "Tier 4", price: 10000, color: "#34d399", meaning: "The smartest of all. Beyond imagination." },
+  { id: "bird", name: "Bird", emoji: "🐤", image: publicAsset("/avatars/bird.png"), head: publicAsset("/avatars/bird-head.png"), tier: "Starter", price: 0, color: "#e8b45a", meaning: "Curious and positive. Perfect for beginners." },
+  { id: "fox", name: "Fox", emoji: "🦊", image: publicAsset("/avatars/fox.png"), head: publicAsset("/avatars/fox-head.png"), tier: "Tier 1", price: 1000, color: "#f97316", meaning: "Agile and clever. Always one step ahead." },
+  { id: "octopus", name: "Octopus", emoji: "🐙", image: publicAsset("/avatars/octopus.png"), head: publicAsset("/avatars/octopus-head.png"), tier: "Tier 2", price: 2000, color: "#a855f7", meaning: "Creative and adaptable. Many ideas, many ways." },
+  { id: "owl", name: "Owl", emoji: "🦉", image: publicAsset("/avatars/owl.png"), head: publicAsset("/avatars/owl-head.png"), tier: "Tier 3", price: 5000, color: "#d4a373", meaning: "Wise and observant. Knowledge is power." },
+  { id: "alien", name: "Alien", emoji: "👽", image: publicAsset("/avatars/alien.png"), head: publicAsset("/avatars/alien-head.png"), tier: "Tier 4", price: 10000, color: "#34d399", meaning: "The smartest of all. Beyond imagination." },
 ] as const satisfies readonly AvatarBase[];
 
 const ICON_RULES = [

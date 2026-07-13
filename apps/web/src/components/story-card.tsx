@@ -4,6 +4,7 @@ import { BranchIcon, StarIcon, UserIcon } from "@/components/icons";
 import { SaveButton } from "@/components/save-button";
 import { StoryCover } from "@/components/story-cover";
 import { formatCount, Stat } from "@/components/ui";
+import { resolveMediaUrl } from "@/lib/assets";
 import type * as Universe from "@/server/app/universe";
 
 const fallbackCover = (slug: string) =>
@@ -18,7 +19,9 @@ export const StoryCard = ({ universe, saved, className }: StoryCard.Props) => (
   >
     <StoryCover
       slug={universe.slug}
-      cover={universe.cover ?? fallbackCover(universe.slug)}
+      cover={
+        resolveMediaUrl(universe.cover) ?? fallbackCover(universe.slug)
+      }
       title={universe.title}
       genre={universe.genreNames[0]}
     />

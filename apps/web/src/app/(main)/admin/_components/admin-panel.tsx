@@ -11,6 +11,7 @@ import * as AdminApp from "@/server/app/admin";
 import * as Chapter from "@/server/app/chapter";
 import type * as Universe from "@/server/app/universe";
 import * as UniverseApp from "@/server/app/universe";
+import { resolveMediaUrl } from "@/lib/assets";
 
 type Tab = "universes" | "chapters" | "stories" | "writers";
 
@@ -296,7 +297,7 @@ export const AdminPanel = ({
                   <div className="relative aspect-[3/4]">
                     {story.cover ? (
                       <Image
-                        src={story.cover}
+                        src={resolveMediaUrl(story.cover) ?? story.cover}
                         alt=""
                         fill
                         className="object-cover"

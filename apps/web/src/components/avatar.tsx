@@ -7,8 +7,8 @@ import { AVATAR_BASES } from "@/lib/avatar-catalog";
 export const AVATAR_PRESETS = AVATAR_BASES.map((base) => ({
   id: base.id,
   label: base.name,
-  file: base.image.replace("/avatars/", ""),
-  head: base.head.replace("/avatars/", ""),
+  image: base.image,
+  head: base.head,
 }));
 
 export type AvatarPreset = (typeof AVATAR_PRESETS)[number]["id"];
@@ -43,9 +43,7 @@ export const Avatar = ({
   const resolved = resolveAvatarPreset(preset);
   const source =
     image ||
-    (resolved
-      ? `/avatars/${variant === "full" ? resolved.file : resolved.head}`
-      : null);
+    (resolved ? (variant === "full" ? resolved.image : resolved.head) : null);
 
   return (
     <span

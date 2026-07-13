@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CoinIcon, SparkleIcon, TrophyIcon } from "@/components/icons";
 import { Chip, formatCount } from "@/components/ui";
+import { resolveMediaUrl } from "@/lib/assets";
 import { createMetadata } from "@/lib/seo";
 import type * as Challenge from "@/server/app/challenge";
 import * as ChallengeApp from "@/server/app/challenge";
@@ -53,7 +54,7 @@ const ChallengeCard = ({ challenge }: { challenge: Challenge.Type }) => {
     Math.ceil((challenge.endsAt.getTime() - Date.now()) / 86_400_000),
   );
   const cover =
-    challenge.cover ??
+    resolveMediaUrl(challenge.cover) ??
     `https://picsum.photos/seed/challenge-${challenge.slug}/640/360`;
 
   return (

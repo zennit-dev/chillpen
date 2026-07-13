@@ -14,6 +14,7 @@ import {
 } from "@/components/icons";
 import { SaveButton } from "@/components/save-button";
 import { Chip, formatCount, Stat } from "@/components/ui";
+import { resolveMediaUrl } from "@/lib/assets";
 import { createMetadata, createUniverseSchema, seo } from "@/lib/seo";
 import * as Save from "@/server/app/save";
 import * as Universe from "@/server/app/universe";
@@ -54,7 +55,8 @@ export default async ({ params }: Params) => {
     universe.originatingAuthor?.name ??
     "unknown";
   const cover =
-    universe.cover ?? `https://picsum.photos/seed/${universe.slug}/1280/720`;
+    resolveMediaUrl(universe.cover) ??
+    `https://picsum.photos/seed/${universe.slug}/1280/720`;
 
   return (
     <main>
