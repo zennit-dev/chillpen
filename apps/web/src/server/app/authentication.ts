@@ -436,7 +436,16 @@ export const signUp = withContext(
         return { success: true as const, data: { verified: true } };
       }
 
-      return { success: true as const, data: { verified: false } };
+      const from = process.env.FROM_EMAIL ?? "onboarding@resend.dev";
+      return {
+        success: true as const,
+        data: {
+          verified: false,
+          // Resend's shared test sender only delivers to the Resend account
+          // owner's inbox — flag so the UI doesn't pretend Hotmail got mail.
+          emailSandbox: from.includes("onboarding@resend.dev"),
+        },
+      };
     } catch (error) {
       if (isAPIError(error)) {
         const code = error.body?.code;
