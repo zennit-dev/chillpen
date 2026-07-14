@@ -43,7 +43,7 @@ export const CATALOG_UNIVERSES: CatalogUniverse[] = [
     hook: "An island the world forgot, where ancient Greek magic never ended — and the island chooses who arrives.",
     description:
       "Dimitri wakes barefoot on white stone before a city of marble and fire. Asteri Island has brought him to the School of Magic — and it never brings anyone by accident.",
-    author: "reader",
+    author: "curator",
     genres: ["fantasy"],
     rating: 49,
     completion: 8,
@@ -62,7 +62,7 @@ export const CATALOG_UNIVERSES: CatalogUniverse[] = [
     hook: "Five women, one candlelit bar, and a club with only one rule: say the truth before it ruins your life.",
     description:
       "Amanda Vale believed every woman in New York needed a sharp coat, a sharper friend, and one place to tell the truth. The Velvet Room was that place — until the club got rules.",
-    author: "reader",
+    author: "curator",
     genres: ["romance", "drama"],
     rating: 48,
     completion: 6,
@@ -81,7 +81,7 @@ export const CATALOG_UNIVERSES: CatalogUniverse[] = [
     hook: "A shadow-born prince, a forest that remembers, and a blade with a name carved in bark.",
     description:
       "Hunted through a living forest by something older than any clan, Rikimaru learns why the shadows chose him — and what they want back.",
-    author: "reader",
+    author: "curator",
     genres: ["fantasy", "thriller"],
     rating: 47,
     completion: 7,
@@ -100,7 +100,7 @@ export const CATALOG_UNIVERSES: CatalogUniverse[] = [
     hook: "A wild beast from Norway, released to conquer the world — one goal at a time.",
     description:
       "There are many dangerous creatures in Norway. None of them compare to the one wearing the number nine.",
-    author: "reader",
+    author: "curator",
     genres: ["satire", "drama"],
     rating: 46,
     completion: 5,
