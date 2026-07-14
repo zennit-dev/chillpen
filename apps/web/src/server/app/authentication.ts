@@ -138,7 +138,10 @@ const signInFailure = (message: string) => ({
 
 const hasCredentialAccount = async (user: string) => {
   const rows = await db
-    .select({ id: schema.account.id })
+    .select({
+      id: schema.account.id,
+      password: schema.account.password,
+    })
     .from(schema.account)
     .where(
       and(
@@ -166,9 +169,9 @@ export const signIn = withContext(
       );
 
     const credential = await hasCredentialAccount(users.data[0].id);
-    if (!credential)
+    if (!credential || !credential.password)
       return signInFailure(
-        "This account has no password yet. Use Forgot password to set one.",
+        "This account has no password yet. Use Forgot password to set one — or contact support if reset email isn’t configured.",
       );
 
     try {
