@@ -4,10 +4,10 @@ import { revalidatePath } from "next/cache";
 import {
   AVATAR_BASES,
   AVATAR_ITEMS,
+  type AvatarItem,
   avatarRank,
   itemUnlocked,
   slotFor,
-  type AvatarItem,
 } from "@/lib/avatar-catalog";
 import type { AvatarConfig } from "../database/schema";
 import { withAuthentication } from "../utils/authentication";
@@ -103,7 +103,10 @@ export const unlockAvatar = withAuthentication(
     }
 
     if (account.data.coins < base.price)
-      return { success: false as const, error: new Error("insufficient-coins") };
+      return {
+        success: false as const,
+        error: new Error("insufficient-coins"),
+      };
 
     const spent = await Coin.award(Environment.SERVER, {
       user: context.session.user.id,
@@ -123,7 +126,10 @@ export const unlockAvatar = withAuthentication(
     const saved = await saveConfig(context.session.user.id, updated);
     if (!saved.success) return saved;
 
-    const refreshed = await User.get(Environment.SERVER, context.session.user.id);
+    const refreshed = await User.get(
+      Environment.SERVER,
+      context.session.user.id,
+    );
     if (!refreshed.success || !refreshed.data) return refreshed;
 
     return {
@@ -154,10 +160,16 @@ export const purchaseItem = withAuthentication(
       return { success: false as const, error: new Error("already-owned") };
 
     if (!itemUnlocked(catalog, config.ownedAvatars ?? ["bird"]))
-      return { success: false as const, error: new Error("avatar-tier-locked") };
+      return {
+        success: false as const,
+        error: new Error("avatar-tier-locked"),
+      };
 
     if (account.data.coins < catalog.price)
-      return { success: false as const, error: new Error("insufficient-coins") };
+      return {
+        success: false as const,
+        error: new Error("insufficient-coins"),
+      };
 
     const spent = await Coin.award(Environment.SERVER, {
       user: context.session.user.id,
@@ -175,7 +187,10 @@ export const purchaseItem = withAuthentication(
     });
     if (!saved.success) return saved;
 
-    const refreshed = await User.get(Environment.SERVER, context.session.user.id);
+    const refreshed = await User.get(
+      Environment.SERVER,
+      context.session.user.id,
+    );
     if (!refreshed.success || !refreshed.data) return refreshed;
 
     return {
@@ -201,7 +216,10 @@ export const wearItem = withAuthentication(
 
     const slot = slotFor(catalog);
     const equipped = { ...(config.equipped ?? {}), [slot]: item };
-    const saved = await saveConfig(context.session.user.id, { ...config, equipped });
+    const saved = await saveConfig(context.session.user.id, {
+      ...config,
+      equipped,
+    });
     if (!saved.success) return saved;
 
     return { success: true as const, data: { equipped } };

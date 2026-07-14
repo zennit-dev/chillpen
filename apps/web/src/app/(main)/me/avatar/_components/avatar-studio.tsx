@@ -5,18 +5,18 @@ import { useAsyncAction } from "@zenncore/utils/hooks";
 import { Button } from "@zenncore/web/components/button";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { CoinIcon } from "@/components/icons";
 import {
   AVATAR_BASES,
   AVATAR_ITEMS,
-  ITEM_CATEGORIES,
-  SLOT_LABELS,
+  type AvatarItem,
   equippedCatalog,
+  ITEM_CATEGORIES,
   itemUnlocked,
   requiredAvatarName,
+  SLOT_LABELS,
   tierColor,
-  type AvatarItem,
 } from "@/lib/avatar-catalog";
-import { CoinIcon } from "@/components/icons";
 import * as AvatarStudio from "@/server/app/avatar-studio";
 
 export const AvatarStudioPanel = ({
@@ -34,7 +34,8 @@ export const AvatarStudioPanel = ({
   const [ownedItems, setOwnedItems] = useState(wallet.ownedItems);
   const [equipped, setEquipped] = useState(wallet.equipped);
 
-  const base = AVATAR_BASES.find((entry) => entry.id === preset) ?? AVATAR_BASES[0];
+  const base =
+    AVATAR_BASES.find((entry) => entry.id === preset) ?? AVATAR_BASES[0];
 
   const worn = useMemo(() => equippedCatalog(equipped), [equipped]);
 
@@ -195,14 +196,10 @@ export const AvatarStudioPanel = ({
                 key={character.id}
                 className={cn(
                   "flex flex-col items-center gap-3 rounded-xl border bg-background-rich p-4 text-center",
-                  selected
-                    ? "border-primary/50"
-                    : "border-white/8",
+                  selected ? "border-primary/50" : "border-white/8",
                 )}
                 style={
-                  selected
-                    ? { borderColor: `${character.color}80` }
-                    : undefined
+                  selected ? { borderColor: `${character.color}80` } : undefined
                 }
               >
                 <div
@@ -237,7 +234,9 @@ export const AvatarStudioPanel = ({
                   onClick={() => void unlock(character.id)}
                   className="w-full"
                   variant={selected || owned ? "outline" : "default"}
-                  color={!owned && affordable && !selected ? "primary" : "neutral"}
+                  color={
+                    !owned && affordable && !selected ? "primary" : "neutral"
+                  }
                   style={
                     selected
                       ? {

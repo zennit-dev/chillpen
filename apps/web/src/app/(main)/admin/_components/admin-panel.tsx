@@ -6,12 +6,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { resolveMediaUrl } from "@/lib/assets";
 import type * as Admin from "@/server/app/admin";
 import * as AdminApp from "@/server/app/admin";
 import * as Chapter from "@/server/app/chapter";
 import type * as Universe from "@/server/app/universe";
 import * as UniverseApp from "@/server/app/universe";
-import { resolveMediaUrl } from "@/lib/assets";
 
 type Tab = "universes" | "chapters" | "stories" | "writers";
 

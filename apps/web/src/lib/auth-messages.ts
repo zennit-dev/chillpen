@@ -26,14 +26,16 @@ export const signInFeedback = (
       hint: "verify-email",
     };
 
-  if (message.includes("already has a chillpen account") || message.includes("already exists"))
+  if (
+    message.includes("already has a chillpen account") ||
+    message.includes("already exists")
+  )
     return {
       message,
       hint: "sign-up",
     };
 
-  if (message.includes("pseudonym"))
-    return { message };
+  if (message.includes("pseudonym")) return { message };
 
   return {
     message: message || "Could not sign in. Check your email and password.",
@@ -56,6 +58,8 @@ export const signUpFeedback = (
     return { message: "That pseudonym is already taken — try another." };
 
   return {
-    message: message || "Could not create your account. Try a different email or pseudonym.",
+    message:
+      message ||
+      "Could not create your account. Try a different email or pseudonym.",
   };
 };

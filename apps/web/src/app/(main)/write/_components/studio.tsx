@@ -57,7 +57,10 @@ export const Studio = ({
   const router = useRouter();
 
   const [mode, setMode] = useState<"continue" | "new">(
-    existingChapter || preselectedUniverse || preselectedParent || universes.length > 0
+    existingChapter ||
+      preselectedUniverse ||
+      preselectedParent ||
+      universes.length > 0
       ? "continue"
       : "new",
   );
@@ -83,7 +86,9 @@ export const Studio = ({
   const coverInput = useRef<HTMLInputElement>(null);
 
   // shared chapter state
-  const [chapterTitle, setChapterTitle] = useState(existingChapter?.title ?? "");
+  const [chapterTitle, setChapterTitle] = useState(
+    existingChapter?.title ?? "",
+  );
   const [body, setBody] = useState(existingChapter?.body ?? "");
   const [summary, setSummary] = useState(existingChapter?.summary ?? "");
   const [error, setError] = useState<string | null>(null);

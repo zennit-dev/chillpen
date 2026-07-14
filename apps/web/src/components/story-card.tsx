@@ -19,9 +19,7 @@ export const StoryCard = ({ universe, saved, className }: StoryCard.Props) => (
   >
     <StoryCover
       slug={universe.slug}
-      cover={
-        resolveMediaUrl(universe.cover) ?? fallbackCover(universe.slug)
-      }
+      cover={resolveMediaUrl(universe.cover) ?? fallbackCover(universe.slug)}
       title={universe.title}
       genre={universe.genreNames[0]}
     />

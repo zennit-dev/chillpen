@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { z } from "zod";
-import { signInFeedback, type AuthFeedback } from "@/lib/auth-messages";
+import { type AuthFeedback, signInFeedback } from "@/lib/auth-messages";
 import * as Authentication from "@/server/app/authentication";
 import { AuthAlert } from "../../_components/auth-alert";
 

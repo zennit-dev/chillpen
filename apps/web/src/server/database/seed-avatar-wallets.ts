@@ -17,7 +17,11 @@ export const seedAvatarWallets = async () => {
     const raw = account.avatarConfig?.preset;
     const preset = (raw && LEGACY_PRESETS[raw]) || raw || "bird";
     const ownedAvatars = [
-      ...new Set(["bird", ...(account.avatarConfig?.ownedAvatars ?? []), preset]),
+      ...new Set([
+        "bird",
+        ...(account.avatarConfig?.ownedAvatars ?? []),
+        preset,
+      ]),
     ];
 
     await db

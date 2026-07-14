@@ -1,10 +1,6 @@
 import { db, schema } from "./index";
 import type { LeaderboardEntry } from "./schema";
-import {
-  ADMIN_EMAIL,
-  ADMIN_PASSWORD,
-  seedAdminAuth,
-} from "./seed-admin-auth";
+import { ADMIN_EMAIL, ADMIN_PASSWORD, seedAdminAuth } from "./seed-admin-auth";
 import { seedAvatarWallets } from "./seed-avatar-wallets";
 import { seedCatalog } from "./seed-catalog";
 import { seedModerationDemo } from "./seed-moderation-demo";

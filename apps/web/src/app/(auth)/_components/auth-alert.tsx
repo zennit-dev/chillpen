@@ -4,11 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { AuthFeedback } from "@/lib/auth-messages";
 
-export const AuthAlert = ({
-  feedback,
-}: {
-  feedback: AuthFeedback | null;
-}) => {
+export const AuthAlert = ({ feedback }: { feedback: AuthFeedback | null }) => {
   if (!feedback) return null;
 
   return (

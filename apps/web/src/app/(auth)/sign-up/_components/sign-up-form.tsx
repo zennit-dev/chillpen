@@ -8,10 +8,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { z } from "zod";
 import { CheckBadgeIcon } from "@/components/icons";
-import {
-  signUpFeedback,
-  type AuthFeedback,
-} from "@/lib/auth-messages";
+import { type AuthFeedback, signUpFeedback } from "@/lib/auth-messages";
 import * as Authentication from "@/server/app/authentication";
 import { AuthAlert } from "../../_components/auth-alert";
 
