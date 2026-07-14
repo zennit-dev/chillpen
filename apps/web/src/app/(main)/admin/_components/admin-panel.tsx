@@ -2,16 +2,13 @@
 
 import { cn } from "@zenncore/utils";
 import { Button } from "@zenncore/web/components/button";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { resolveMediaUrl } from "@/lib/assets";
 import type * as Admin from "@/server/app/admin";
 import * as AdminApp from "@/server/app/admin";
 import * as Chapter from "@/server/app/chapter";
-import type * as Universe from "@/server/app/universe";
-import * as UniverseApp from "@/server/app/universe";
+import { CatalogManager } from "./catalog-manager";
 
 type Tab = "universes" | "chapters" | "stories" | "writers";
 
@@ -19,24 +16,18 @@ export const AdminPanel = ({
   stats,
   pendingUniverses,
   pendingChapters,
-  stories,
+  catalog,
   writers,
 }: AdminPanel.Props) => {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("stories");
   const [toast, setToast] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [featured, setFeatured] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(
-      stories.map((story) => [story.id, story.featuredEnabled]),
-    ),
-  );
   const [universeRows, setUniverseRows] = useState(pendingUniverses);
   const [chapterRows, setChapterRows] = useState(pendingChapters);
 
   const pendingUniversesCount = universeRows.length;
   const pendingChaptersCount = chapterRows.length;
-  const featuredCount = Object.values(featured).filter(Boolean).length;
 
   const tabs: { id: Tab; label: string }[] = [
     {
@@ -44,7 +35,7 @@ export const AdminPanel = ({
       label: `Pending universes (${pendingUniversesCount})`,
     },
     { id: "chapters", label: `Pending chapters (${pendingChaptersCount})` },
-    { id: "stories", label: `Stories (${stories.length})` },
+    { id: "stories", label: `Catalog (${catalog.length})` },
     { id: "writers", label: "Top writers" },
   ];
 
@@ -106,23 +97,6 @@ export const AdminPanel = ({
     }
   };
 
-  const toggleFeatured = async (story: Universe.Card) => {
-    const next = !featured[story.id];
-    setFeatured((current) => ({ ...current, [story.id]: next }));
-    const result = await UniverseApp.toggleFeatured({
-      universe: story.id,
-      enabled: next,
-      order: story.featuredOrder,
-      hook: story.featuredHook ?? undefined,
-    });
-    if (!result.success)
-      setFeatured((current) => ({ ...current, [story.id]: !next }));
-    else
-      setToast(
-        next ? `Featured "${story.title}".` : `Unfeatured "${story.title}".`,
-      );
-  };
-
   return (
     <div className="space-y-10">
       <header className="flex flex-wrap items-end justify-between gap-5">
@@ -133,6 +107,10 @@ export const AdminPanel = ({
           <h1 className="mt-1 font-display font-semibold text-4xl text-foreground tracking-tight sm:text-5xl">
             Admin
           </h1>
+          <p className="mt-2 max-w-xl font-body text-foreground-muted text-sm">
+            Full catalog control: open any title, edit metadata and chapter
+            text, feature for the homepage, or delete when needed.
+          </p>
         </div>
         <Link
           href="/write"
@@ -281,58 +259,7 @@ export const AdminPanel = ({
         )
       ) : null}
 
-      {tab === "stories" ? (
-        <>
-          <p className="font-subtitle text-2xs text-primary uppercase tracking-[0.3em]">
-            Featured on homepage: {featuredCount} / {stories.length}
-          </p>
-          <div className="mt-5 grid grid-cols-2 gap-5 lg:grid-cols-4">
-            {stories.map((story) => {
-              const on = featured[story.id] ?? false;
-              return (
-                <article
-                  key={story.id}
-                  className="relative overflow-hidden rounded-[10px] border border-white/8 bg-background-rich"
-                >
-                  <div className="relative aspect-[3/4]">
-                    {story.cover ? (
-                      <Image
-                        src={resolveMediaUrl(story.cover) ?? story.cover}
-                        alt=""
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 1024px) 50vw, 25vw"
-                      />
-                    ) : null}
-                    <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-                    <button
-                      type="button"
-                      aria-label="Toggle featured"
-                      onClick={() => void toggleFeatured(story)}
-                      className={cn(
-                        "absolute top-3.5 left-3.5 flex size-9 items-center justify-center rounded-full transition",
-                        on
-                          ? "bg-primary text-background"
-                          : "bg-background/60 text-foreground-dimmed",
-                      )}
-                    >
-                      ★
-                    </button>
-                    <div className="absolute inset-x-3.5 bottom-3">
-                      <p className="font-display font-semibold text-foreground text-base">
-                        {story.title}
-                      </p>
-                      <p className="font-subtitle text-2xs text-foreground-muted">
-                        {story.readCount} reads · {story.genreNames[0] ?? "—"}
-                      </p>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </>
-      ) : null}
+      {tab === "stories" ? <CatalogManager stories={catalog} /> : null}
 
       {tab === "writers" ? (
         <div className="overflow-hidden rounded-[12px] border border-white/8">
@@ -373,7 +300,7 @@ export namespace AdminPanel {
     stats: Admin.DashboardStats;
     pendingUniverses: Admin.PendingUniverse[];
     pendingChapters: Admin.QueueEntry[];
-    stories: Universe.Card[];
+    catalog: Admin.CatalogStory[];
     writers: {
       rank: number;
       pseudonym: string;
