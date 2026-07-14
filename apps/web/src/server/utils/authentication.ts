@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import type * as Session from "@/server/app/session";
-import * as User from "@/server/app/user";
+import type * as User from "@/server/app/user";
+import { schema } from "@/server/database";
 import {
   type ContextedAction,
   defineWithContext,
@@ -10,6 +11,11 @@ import {
 } from "./context";
 import { Environment } from "./environment";
 import { UnauthenticatedError } from "./error";
+import { repository } from "./repository";
+
+// Use the repository directly — importing `@/server/app/user` here creates a
+// circular TDZ with `withAuthentication` (user.ts imports this module).
+const { get: getUser } = repository(schema.user);
 
 export type AuthenticatedContext = GenericContext & {
   session: { user: User.Type; session: Session.Type };
@@ -36,7 +42,7 @@ export const authenticate: Enhancer<
       error: new UnauthenticatedError("Unauthenticated"),
     };
 
-  const profile = await User.get(Environment.SERVER, session.user.id);
+  const profile = await getUser(Environment.SERVER, session.user.id);
   if (!profile.success || !profile.data)
     return {
       success: false,
