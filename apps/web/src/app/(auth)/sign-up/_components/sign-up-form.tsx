@@ -41,7 +41,6 @@ const config = {
 export const SignUpForm = () => {
   const router = useRouter();
   const [sent, setSent] = useState(false);
-  const [emailSandbox, setEmailSandbox] = useState(false);
   const [feedback, setFeedback] = useState<AuthFeedback | null>(null);
 
   const [submit, isPending] = useAsyncAction(
@@ -71,13 +70,14 @@ export const SignUpForm = () => {
           return;
         }
 
+        // Sandbox / no deliverable FROM_EMAIL → signed in immediately.
+        // Real domain mail → ask them to click the Resend link.
         if (result.data.verified) {
           router.push("/sign-up/payment");
           router.refresh();
           return;
         }
 
-        setEmailSandbox(Boolean(result.data.emailSandbox));
         setSent(true);
       } catch {
         setFeedback({
@@ -93,42 +93,14 @@ export const SignUpForm = () => {
       <div className="rounded-xl border border-white/10 bg-white/[0.02] p-6 text-center">
         <CheckBadgeIcon className="mx-auto size-10 text-primary" />
         <h2 className="mt-3 font-display font-medium text-foreground text-lg">
-          {emailSandbox
-            ? "Almost there — email setup is incomplete"
-            : "Check your email"}
+          Check your email
         </h2>
-        {emailSandbox ? (
-          <p className="mt-1 font-body text-foreground-dimmed text-sm">
-            chillpen is still using Resend&apos;s test sender (
-            <span className="text-foreground">onboarding@resend.dev</span>
-            ), which can only deliver to the Resend account owner&apos;s inbox —
-            not to Hotmail or other addresses. Verify a domain at{" "}
-            <a
-              href="https://resend.com/domains"
-              target="_blank"
-              rel="noreferrer"
-              className="text-primary"
-            >
-              resend.com/domains
-            </a>{" "}
-            and set <span className="text-foreground">FROM_EMAIL</span> to an
-            address on that domain, then ask an admin to verify your account or
-            try again.
-          </p>
-        ) : (
-          <p className="mt-1 font-body text-foreground-dimmed text-sm">
-            We sent a verification link. After you verify,{" "}
-            <Link href="/sign-in" className="text-primary">
-              sign in
-            </Link>{" "}
-            to add payment and start your trial.
-          </p>
-        )}
-        <p className="mt-4 font-body text-foreground-dimmed text-sm">
-          Already verified?{" "}
+        <p className="mt-1 font-body text-foreground-dimmed text-sm">
+          We sent a verification link. After you verify,{" "}
           <Link href="/sign-in" className="text-primary">
-            Sign in
-          </Link>
+            sign in
+          </Link>{" "}
+          to add payment and start your trial.
         </p>
       </div>
     );

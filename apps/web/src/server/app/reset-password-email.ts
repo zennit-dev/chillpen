@@ -1,5 +1,9 @@
 import { render } from "@react-email/render";
 import { Resend } from "resend";
+import {
+  canDeliverTransactionalEmail,
+  isResendSandbox,
+} from "@/lib/email-delivery";
 import { ResetPasswordEmail } from "@/public/templates/reset";
 
 // Constructed lazily — `new Resend(undefined)` throws, which would crash any
@@ -7,8 +11,8 @@ import { ResetPasswordEmail } from "@/public/templates/reset";
 const createResend = () => new Resend(process.env.RESEND_API_KEY);
 
 /**
- * Sends the password-reset email. No-ops when Resend isn't configured so the
- * forgot-password flow degrades gracefully instead of throwing.
+ * Sends the password-reset email. No-ops when Resend isn't able to deliver to
+ * arbitrary inboxes so forgot-password degrades instead of throwing.
  */
 export const sendResetPasswordEmail = async ({
   to,
@@ -17,8 +21,13 @@ export const sendResetPasswordEmail = async ({
   to: string;
   resetUrl: string;
 }) => {
-  const canSend = (process.env.RESEND_API_KEY ?? "").length > 20;
-  if (!canSend) return;
+  if (!canDeliverTransactionalEmail()) {
+    console.warn(
+      "[resend] skipping reset email — configure a verified-domain FROM_EMAIL",
+      { to, sandbox: isResendSandbox() },
+    );
+    return;
+  }
 
   const resend = createResend();
   const html = await render(
@@ -28,12 +37,25 @@ export const sendResetPasswordEmail = async ({
     }),
   );
 
+  const from = process.env.FROM_EMAIL ?? "";
+  if (!from) {
+    console.warn("[resend] skipping reset email — FROM_EMAIL unset", { to });
+    return;
+  }
+
   const result = await resend.emails.send({
-    from: process.env.FROM_EMAIL ?? "onboarding@resend.dev",
+    from,
     to,
     subject: "Reset your chillpen password",
     html,
   });
 
-  if (result.error) throw result.error;
+  if (result.error) {
+    console.error("[resend] reset email failed", {
+      to,
+      from,
+      error: result.error,
+    });
+    throw result.error;
+  }
 };
