@@ -7,6 +7,11 @@ import { AdminPanel } from "./_components/admin-panel";
 
 export const metadata = { title: "Admin" };
 
+const buildLabel =
+  process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ??
+  process.env.NEXT_PUBLIC_BUILD_ID ??
+  "dev";
+
 export default async () => {
   const proxied = await resultify(() =>
     Authentication.getProxiedCurrentUser(Environment.SERVER),
@@ -50,6 +55,7 @@ export default async () => {
     <main className="px-4 pt-28 pb-20 sm:px-6">
       <div className="mx-auto max-w-6xl">
         <AdminPanel
+          buildLabel={buildLabel}
           stats={statsData}
           pendingUniverses={pendingUniversesData}
           pendingChapters={pendingChaptersData}

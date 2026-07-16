@@ -14,6 +14,11 @@ import * as UniverseApp from "@/server/app/universe";
 
 type Panel = "edit" | "chapters" | null;
 
+const actionError = (
+  fallback: string,
+  result: { success: false; error?: { message?: string } },
+) => result.error?.message?.trim() || fallback;
+
 export const CatalogManager = ({ stories }: CatalogManager.Props) => {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -63,7 +68,7 @@ export const CatalogManager = ({ stories }: CatalogManager.Props) => {
     const result = await AdminApp.listChapters({ universe: story.id });
     setBusy(null);
     if (result.success) setChapters(result.data);
-    else setToast("Could not load chapters.");
+    else setToast(actionError("Could not load chapters.", result));
   };
 
   const closePanel = () => {
@@ -84,7 +89,7 @@ export const CatalogManager = ({ stories }: CatalogManager.Props) => {
       });
       setBusy(null);
       if (!result.success) {
-        setToast("Could not save title.");
+        setToast(actionError("Could not save title.", result));
         return;
       }
       setRows((current) =>
@@ -116,7 +121,7 @@ export const CatalogManager = ({ stories }: CatalogManager.Props) => {
       const result = await AdminApp.deleteUniverse({ universe: story.id });
       setBusy(null);
       if (!result.success) {
-        setToast("Could not delete title.");
+        setToast(actionError("Could not delete title.", result));
         return;
       }
       setRows((current) => current.filter((row) => row.id !== story.id));
@@ -164,7 +169,7 @@ export const CatalogManager = ({ stories }: CatalogManager.Props) => {
       });
       setBusy(null);
       if (!result.success) {
-        setToast("Could not save chapter.");
+        setToast(actionError("Could not save chapter.", result));
         return;
       }
       setChapters((current) =>
@@ -202,7 +207,7 @@ export const CatalogManager = ({ stories }: CatalogManager.Props) => {
       const result = await AdminApp.deleteChapter({ chapter: chapter.id });
       setBusy(null);
       if (!result.success) {
-        setToast("Could not delete chapter.");
+        setToast(actionError("Could not delete chapter.", result));
         return;
       }
 
@@ -241,7 +246,16 @@ export const CatalogManager = ({ stories }: CatalogManager.Props) => {
       </div>
 
       {toast ? (
-        <p className="font-subtitle text-emerald-400 text-sm">{toast}</p>
+        <p
+          className={cn(
+            "font-subtitle text-sm",
+            toast.includes("Could not") || toast.includes("Insufficient")
+              ? "text-error"
+              : "text-emerald-400",
+          )}
+        >
+          {toast}
+        </p>
       ) : null}
 
       <div className="space-y-3">

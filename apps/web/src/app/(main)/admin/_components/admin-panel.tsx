@@ -13,6 +13,7 @@ import { CatalogManager } from "./catalog-manager";
 type Tab = "universes" | "chapters" | "stories" | "writers";
 
 export const AdminPanel = ({
+  buildLabel,
   stats,
   pendingUniverses,
   pendingChapters,
@@ -108,8 +109,14 @@ export const AdminPanel = ({
             Admin
           </h1>
           <p className="mt-2 max-w-xl font-body text-foreground-muted text-sm">
-            Full catalog control: open any title, edit metadata and chapter
-            text, feature for the homepage, or delete when needed.
+            Catalog tab: <strong className="text-foreground">Open</strong>,{" "}
+            <strong className="text-foreground">Edit</strong>,{" "}
+            <strong className="text-foreground">Chapters</strong>, and{" "}
+            <strong className="text-foreground">Delete</strong> on every title.
+            Build <span className="font-mono text-primary">{buildLabel}</span>
+            {" — "}
+            if you only see cover cards with a star, production has not deployed
+            this version yet.
           </p>
         </div>
         <Link
@@ -297,6 +304,7 @@ export const AdminPanel = ({
 
 export namespace AdminPanel {
   export type Props = {
+    buildLabel: string;
     stats: Admin.DashboardStats;
     pendingUniverses: Admin.PendingUniverse[];
     pendingChapters: Admin.QueueEntry[];
