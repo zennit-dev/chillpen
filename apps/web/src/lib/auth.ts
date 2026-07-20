@@ -2,23 +2,23 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { genericOAuth } from "better-auth/plugins";
+import { canDeliverTransactionalEmail } from "@/lib/email-delivery";
 import { sendResetPasswordEmail } from "@/server/app/reset-password-email";
 import { sendVerificationEmail } from "@/server/app/verification-email";
 import { db, schema } from "@/server/database";
 
 /**
  * better-auth instance backing every `context.auth.*` call in the server layer.
- * Email verification is mandatory (APP.md §6) — writing/earning requires a
- * verified account. Pseudonyms + the chillpen economy columns live on `user`
- * but are managed by repositories, not better-auth, so only the signup-time
- * fields are declared as `additionalFields`.
+ * Email verification is mandatory once real mail delivery works (APP.md §6) —
+ * writing/earning expects a verified account. Until a verified domain
+ * `FROM_EMAIL` is configured, Resend cannot deliver to arbitrary inboxes, so
+ * we skip the verify wall and auto-admit signups (same as missing API key).
  *
- * Verification depends on a real Resend key: until one is configured we cannot
- * deliver the verification email, so requiring it would lock everyone out of
- * signup. We fall back to immediate sign-in and re-enable verification
- * automatically once a real `RESEND_API_KEY` is present.
+ * Pseudonyms + chillpen economy columns live on `user` but are managed by
+ * repositories, not better-auth, so only signup-time fields are declared as
+ * `additionalFields`.
  */
-const canSendVerificationEmail = (process.env.RESEND_API_KEY ?? "").length > 20;
+const canSendVerificationEmail = canDeliverTransactionalEmail();
 
 export const auth = betterAuth({
   appName: "chillpen",

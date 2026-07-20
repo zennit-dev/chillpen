@@ -7,6 +7,11 @@ import { AdminPanel } from "./_components/admin-panel";
 
 export const metadata = { title: "Admin" };
 
+const buildLabel =
+  process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ??
+  process.env.NEXT_PUBLIC_BUILD_ID ??
+  "dev";
+
 export default async () => {
   const proxied = await resultify(() =>
     Authentication.getProxiedCurrentUser(Environment.SERVER),
@@ -16,12 +21,12 @@ export default async () => {
   if (!user) redirect("/sign-in");
   if (user.role !== "admin") redirect("/");
 
-  const [stats, pendingUniverses, pendingChapters, stories, writers] =
+  const [stats, pendingUniverses, pendingChapters, catalog, writers] =
     await Promise.all([
       resultify(() => Admin.dashboard(Environment.SERVER)),
       resultify(() => Admin.pendingUniverses(Environment.SERVER)),
       resultify(() => Admin.pendingChapters(Environment.SERVER)),
-      resultify(() => Admin.listStories(Environment.SERVER)),
+      resultify(() => Admin.listCatalog(Environment.SERVER)),
       resultify(() => Admin.topWriters(Environment.SERVER)),
     ]);
 
@@ -35,8 +40,8 @@ export default async () => {
     pendingChapters.success && pendingChapters.data.success
       ? pendingChapters.data.data
       : [];
-  const storiesData =
-    stories.success && stories.data.success ? stories.data.data : [];
+  const catalogData =
+    catalog.success && catalog.data.success ? catalog.data.data : [];
   const writersData =
     writers.success && writers.data.success ? writers.data.data : [];
 
@@ -50,10 +55,11 @@ export default async () => {
     <main className="px-4 pt-28 pb-20 sm:px-6">
       <div className="mx-auto max-w-6xl">
         <AdminPanel
+          buildLabel={buildLabel}
           stats={statsData}
           pendingUniverses={pendingUniversesData}
           pendingChapters={pendingChaptersData}
-          stories={storiesData}
+          catalog={catalogData}
           writers={writersData}
         />
       </div>

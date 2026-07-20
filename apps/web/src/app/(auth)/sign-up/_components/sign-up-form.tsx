@@ -70,6 +70,8 @@ export const SignUpForm = () => {
           return;
         }
 
+        // Sandbox / no deliverable FROM_EMAIL → signed in immediately.
+        // Real domain mail → ask them to click the Resend link.
         if (result.data.verified) {
           router.push("/sign-up/payment");
           router.refresh();

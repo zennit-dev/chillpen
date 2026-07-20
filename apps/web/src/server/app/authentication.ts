@@ -7,6 +7,7 @@ import { and, eq } from "drizzle-orm";
 import { cookies, headers } from "next/headers";
 import { Resend } from "resend";
 import { VerifyEmail } from "@/public/templates/verify";
+import { canDeliverTransactionalEmail } from "@/lib/email-delivery";
 import { db, schema } from "../database";
 import { withAuthentication } from "../utils/authentication";
 import { withContext } from "../utils/context";
@@ -419,12 +420,12 @@ export const signUp = withContext(
           ownedItems: [],
           equipped: {},
         },
+        // Sandbox / missing mail: admit immediately. Real FROM_EMAIL keeps
+        // emailVerified false until the Resend link is clicked.
+        ...(!canDeliverTransactionalEmail() ? { emailVerified: true } : {}),
       });
 
-      const canSendVerificationEmail =
-        (process.env.RESEND_API_KEY ?? "").length > 20;
-
-      if (!canSendVerificationEmail) {
+      if (!canDeliverTransactionalEmail()) {
         const jar = await cookies();
         const fresh = await User.get(Environment.SERVER, response.user.id);
         setUserCookie(
@@ -436,7 +437,10 @@ export const signUp = withContext(
         return { success: true as const, data: { verified: true } };
       }
 
-      return { success: true as const, data: { verified: false } };
+      return {
+        success: true as const,
+        data: { verified: false, emailSandbox: false },
+      };
     } catch (error) {
       if (isAPIError(error)) {
         const code = error.body?.code;
