@@ -110,8 +110,8 @@ export const AdminPanel = ({
           </h1>
           <p className="mt-2 max-w-xl font-body text-foreground-muted text-sm">
             Catalog tab: <strong className="text-foreground">Open</strong>,{" "}
-            <strong className="text-foreground">Edit</strong>,{" "}
-            <strong className="text-foreground">Chapters</strong>, and{" "}
+            <strong className="text-foreground">Edit</strong> (text + cover
+            photo), <strong className="text-foreground">Chapters</strong>, and{" "}
             <strong className="text-foreground">Delete</strong> on every title.
             Build <span className="font-mono text-primary">{buildLabel}</span>
             {" — "}
