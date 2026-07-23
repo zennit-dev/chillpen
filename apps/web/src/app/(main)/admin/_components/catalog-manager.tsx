@@ -6,11 +6,12 @@ import { TextField, TextFieldInput } from "@zenncore/web/components/text-field";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { resolveMediaUrl } from "@/lib/assets";
 import type * as Admin from "@/server/app/admin";
 import * as AdminApp from "@/server/app/admin";
 import * as UniverseApp from "@/server/app/universe";
+import * as Upload from "@/server/app/upload";
 
 type Panel = "edit" | "chapters" | null;
 
@@ -40,6 +41,10 @@ export const CatalogManager = ({ stories }: CatalogManager.Props) => {
   const [draftDescription, setDraftDescription] = useState("");
   const [draftHook, setDraftHook] = useState("");
   const [draftStatus, setDraftStatus] = useState("published");
+  const [draftCover, setDraftCover] = useState<string | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const coverInput = useRef<HTMLInputElement>(null);
 
   const [chapterTitle, setChapterTitle] = useState("");
   const [chapterSummary, setChapterSummary] = useState("");
@@ -47,6 +52,12 @@ export const CatalogManager = ({ stories }: CatalogManager.Props) => {
   const [chapterStatus, setChapterStatus] = useState("approved");
 
   const featuredCount = Object.values(featured).filter(Boolean).length;
+
+  const pickCover = (file: File | undefined) => {
+    if (!file) return;
+    setCoverFile(file);
+    setCoverPreview(URL.createObjectURL(file));
+  };
 
   const openEdit = (story: Admin.CatalogStory) => {
     setOpen(story.id);
@@ -56,6 +67,9 @@ export const CatalogManager = ({ stories }: CatalogManager.Props) => {
     setDraftDescription(story.description ?? "");
     setDraftHook(story.featuredHook ?? "");
     setDraftStatus(story.status);
+    setDraftCover(story.cover);
+    setCoverFile(null);
+    setCoverPreview(null);
     setToast(null);
   };
 
@@ -75,17 +89,42 @@ export const CatalogManager = ({ stories }: CatalogManager.Props) => {
     setOpen(null);
     setPanel(null);
     setEditingChapter(null);
+    setCoverFile(null);
+    setCoverPreview(null);
   };
 
   const saveUniverse = (story: Admin.CatalogStory) => {
     setBusy(story.id);
     startTransition(async () => {
+      const cover = await (async () => {
+        if (!coverFile) return draftCover ?? undefined;
+        const formData = new FormData();
+        formData.append("file", coverFile);
+        const uploaded = await Upload.uploadImage(formData);
+        if (!uploaded.success) {
+          setToast(
+            actionError(
+              "Cover upload failed — check UploadThing on Vercel.",
+              uploaded,
+            ),
+          );
+          return null;
+        }
+        return uploaded.data.url;
+      })();
+
+      if (cover === null) {
+        setBusy(null);
+        return;
+      }
+
       const result = await AdminApp.updateUniverse({
         universe: story.id,
         title: draftTitle,
         description: draftDescription,
         featuredHook: draftHook,
         status: draftStatus,
+        cover,
       });
       setBusy(null);
       if (!result.success) {
@@ -101,11 +140,63 @@ export const CatalogManager = ({ stories }: CatalogManager.Props) => {
                 description: draftDescription.trim() || null,
                 featuredHook: draftHook.trim() || null,
                 status: draftStatus,
+                cover: cover ?? null,
               }
             : row,
         ),
       );
+      setDraftCover(cover ?? null);
+      setCoverFile(null);
+      setCoverPreview(null);
       setToast(`Saved "${draftTitle.trim()}".`);
+      router.refresh();
+    });
+  };
+
+  /** One-click cover replace from the thumbnail without opening the full form. */
+  const replaceCover = (story: Admin.CatalogStory, file: File | undefined) => {
+    if (!file) return;
+    setBusy(story.id);
+    setToast(null);
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploaded = await Upload.uploadImage(formData);
+      if (!uploaded.success) {
+        setBusy(null);
+        setToast(
+          actionError(
+            "Cover upload failed — check UploadThing on Vercel.",
+            uploaded,
+          ),
+        );
+        return;
+      }
+
+      const result = await AdminApp.updateUniverse({
+        universe: story.id,
+        title: story.title,
+        description: story.description ?? undefined,
+        featuredHook: story.featuredHook ?? undefined,
+        status: story.status,
+        cover: uploaded.data.url,
+      });
+      setBusy(null);
+      if (!result.success) {
+        setToast(actionError("Could not update cover.", result));
+        return;
+      }
+      setRows((current) =>
+        current.map((row) =>
+          row.id === story.id ? { ...row, cover: uploaded.data.url } : row,
+        ),
+      );
+      if (open === story.id && panel === "edit") {
+        setDraftCover(uploaded.data.url);
+        setCoverFile(null);
+        setCoverPreview(null);
+      }
+      setToast(`Updated cover for "${story.title}".`);
       router.refresh();
     });
   };
@@ -241,7 +332,9 @@ export const CatalogManager = ({ stories }: CatalogManager.Props) => {
           Catalog · Featured on homepage: {featuredCount} / {rows.length}
         </p>
         <p className="font-body text-foreground-dimmed text-sm">
-          Open, edit, or delete any title and its chapters.
+          Open, edit text/cover photos, or delete any title and its chapters.
+          Hover a cover thumbnail and click <span className="text-foreground">Change</span>{" "}
+          to swap the photo.
         </p>
       </div>
 
@@ -278,6 +371,19 @@ export const CatalogManager = ({ stories }: CatalogManager.Props) => {
                       sizes="80px"
                     />
                   ) : null}
+                  <label className="absolute inset-0 flex cursor-pointer items-end justify-center bg-gradient-to-t from-background/90 via-transparent to-transparent pb-1 font-subtitle text-[10px] text-foreground uppercase tracking-wider opacity-0 transition hover:opacity-100">
+                    Change
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={busy === story.id || pending}
+                      onChange={(event) => {
+                        replaceCover(story, event.target.files?.[0]);
+                        event.target.value = "";
+                      }}
+                    />
+                  </label>
                 </div>
 
                 <div className="min-w-0 flex-1 space-y-1">
@@ -355,22 +461,63 @@ export const CatalogManager = ({ stories }: CatalogManager.Props) => {
                   <p className="font-subtitle text-2xs text-primary uppercase tracking-[0.3em]">
                     Edit title
                   </p>
-                  <TextField
-                    value={draftTitle}
-                    onValueChange={setDraftTitle}
-                    className="rounded-md border border-white/10 bg-background px-3"
-                  >
-                    <TextFieldInput placeholder="Title" />
-                  </TextField>
-                  <textarea
-                    value={draftDescription}
-                    onChange={(event) =>
-                      setDraftDescription(event.target.value)
-                    }
-                    placeholder="Description"
-                    rows={3}
-                    className="w-full rounded-md border border-white/10 bg-background px-3 py-2 font-body text-foreground text-sm outline-none focus:border-primary"
-                  />
+                  <div className="grid gap-4 sm:grid-cols-[120px_1fr]">
+                    <button
+                      type="button"
+                      disabled={busy === story.id || pending}
+                      onClick={() => coverInput.current?.click()}
+                      className="relative aspect-[2/3] overflow-hidden rounded-md border border-white/15 border-dashed bg-background transition hover:border-primary"
+                    >
+                      {coverPreview || draftCover ? (
+                        // biome-ignore lint/performance/noImgElement: preview may be a local object URL
+                        <img
+                          src={
+                            coverPreview ??
+                            resolveMediaUrl(draftCover ?? "") ??
+                            draftCover ??
+                            ""
+                          }
+                          alt=""
+                          className="size-full object-cover"
+                        />
+                      ) : (
+                        <span className="flex size-full items-center justify-center px-2 text-center font-subtitle text-2xs text-foreground-dimmed uppercase tracking-wider">
+                          Upload cover
+                        </span>
+                      )}
+                      <span className="absolute inset-x-0 bottom-0 bg-background/80 py-1 text-center font-subtitle text-[10px] text-foreground uppercase tracking-wider">
+                        {coverFile ? "New photo" : "Change photo"}
+                      </span>
+                    </button>
+                    <input
+                      ref={coverInput}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(event) => {
+                        pickCover(event.target.files?.[0]);
+                        event.target.value = "";
+                      }}
+                    />
+                    <div className="space-y-3">
+                      <TextField
+                        value={draftTitle}
+                        onValueChange={setDraftTitle}
+                        className="rounded-md border border-white/10 bg-background px-3"
+                      >
+                        <TextFieldInput placeholder="Title" />
+                      </TextField>
+                      <textarea
+                        value={draftDescription}
+                        onChange={(event) =>
+                          setDraftDescription(event.target.value)
+                        }
+                        placeholder="Description"
+                        rows={3}
+                        className="w-full rounded-md border border-white/10 bg-background px-3 py-2 font-body text-foreground text-sm outline-none focus:border-primary"
+                      />
+                    </div>
+                  </div>
                   <TextField
                     value={draftHook}
                     onValueChange={setDraftHook}
