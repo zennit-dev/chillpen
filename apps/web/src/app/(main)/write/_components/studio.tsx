@@ -38,6 +38,7 @@ const GETTING_LONG_MESSAGE =
   "This chapter is getting long. Consider splitting it into two parts for better reader experience.";
 const TOO_LONG_MESSAGE =
   "Please split this into multiple chapters before submitting.";
+const COVER_MISSING_MESSAGE = "Your cover is missing — add it please.";
 
 const slugify = (value: string) =>
   value
@@ -150,6 +151,8 @@ export const Studio = ({
         return TOO_SHORT_MESSAGE;
       case "chapter-too-long":
         return TOO_LONG_MESSAGE;
+      case "cover-required":
+        return COVER_MISSING_MESSAGE;
       default:
         return null;
     }
@@ -239,14 +242,24 @@ export const Studio = ({
         setError(TOO_LONG_MESSAGE);
         return;
       }
+      if (!coverFile) {
+        setError(COVER_MISSING_MESSAGE);
+        return;
+      }
 
       const cover = await (async () => {
-        if (!coverFile) return undefined;
         const formData = new FormData();
         formData.append("file", coverFile);
         const uploaded = await Upload.uploadImage(formData);
-        return uploaded.success ? uploaded.data.url : undefined;
+        return uploaded.success ? uploaded.data.url : null;
       })();
+
+      if (!cover) {
+        setError(
+          "We couldn't upload your cover. Try another image, then submit again.",
+        );
+        return;
+      }
 
       const created = await Universe.createUniverse({
         title: universeTitle,
@@ -266,7 +279,8 @@ export const Studio = ({
       });
       if (!created.success) {
         setError(
-          created.error?.message ??
+          publishMessage(created.error?.message) ??
+            created.error?.message ??
             "Could not publish your universe. Please try again.",
         );
         return;
@@ -332,6 +346,7 @@ export const Studio = ({
             <div className="grid gap-4 sm:grid-cols-[140px_1fr]">
               <CoverPicker
                 preview={coverPreview}
+                required
                 onPick={() => coverInput.current?.click()}
               />
               <input
@@ -669,14 +684,21 @@ const Stat = ({ value, label }: { value: ReactNode; label: string }) => (
 const CoverPicker = ({
   preview,
   onPick,
+  required,
 }: {
   preview: string | null;
   onPick: () => void;
+  required?: boolean;
 }) => (
   <button
     type="button"
     onClick={onPick}
-    className="group flex aspect-[2/3] flex-col items-center justify-center gap-2 overflow-hidden rounded-[8px] border border-white/10 border-dashed bg-background-rich text-foreground-dimmed transition hover:border-primary/40 hover:text-primary"
+    className={cn(
+      "group flex aspect-[2/3] flex-col items-center justify-center gap-2 overflow-hidden rounded-[8px] border border-dashed bg-background-rich text-foreground-dimmed transition hover:border-primary/40 hover:text-primary",
+      required && !preview
+        ? "border-error/50 text-error"
+        : "border-white/10",
+    )}
   >
     {preview ? (
       // biome-ignore lint/performance/noImgElement: local object-URL preview, not a remote asset
@@ -685,7 +707,7 @@ const CoverPicker = ({
       <>
         <SparkleIcon className="size-5" />
         <span className="font-subtitle text-2xs uppercase tracking-widest">
-          Upload cover
+          {required ? "Cover required" : "Upload cover"}
         </span>
       </>
     )}

@@ -57,7 +57,12 @@ export const AdminPanel = ({
       setUniverseRows((current) => current.filter((row) => row.id !== id));
       setToast(`Approved "${title}" — published.`);
       router.refresh();
+      return;
     }
+    setToast(
+      result.error?.message?.trim() ||
+        `Could not approve "${title}". Add a cover first if it's missing.`,
+    );
   };
 
   const rejectUniverse = async (id: string, title: string) => {
@@ -128,7 +133,16 @@ export const AdminPanel = ({
       </header>
 
       {toast ? (
-        <p className="font-subtitle text-emerald-400 text-sm">{toast}</p>
+        <p
+          className={cn(
+            "font-subtitle text-sm",
+            toast.includes("Could not") || toast.includes("cover is missing")
+              ? "text-error"
+              : "text-emerald-400",
+          )}
+        >
+          {toast}
+        </p>
       ) : null}
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">

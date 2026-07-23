@@ -325,6 +325,12 @@ export const createUniverse = withAuthentication(
       firstChapter: { title: string; body: string; summary?: string };
     },
   ) => {
+    if (!input.cover?.trim())
+      return {
+        success: false as const,
+        error: new Error("cover-required"),
+      };
+
     // Guarantee a unique slug up front so a title collision can't abort the
     // insert transaction (a duplicate key previously bubbled up as a 500).
     const slug = await resolveUniqueSlug(input.slug);

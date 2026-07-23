@@ -1,6 +1,7 @@
 "use server";
 
 import { and, eq, inArray, isNull, ne, or } from "drizzle-orm";
+import { COVER_REQUIRED_MESSAGE, hasCover } from "@/lib/cover-required";
 import { unique } from "@/utils/array";
 import { schema, type TransactionScope, withTransaction } from "../database";
 import { withAuthorization } from "../utils/authorization";
@@ -362,6 +363,23 @@ export const updateUniverse = withAuthorization(
         error: new Error("title-required"),
       };
 
+    const current = await Universe.get(Environment.SERVER, input.universe);
+    if (!current.success) return current;
+    if (!current.data)
+      return {
+        success: false as const,
+        error: new Error("universe-not-found"),
+      };
+
+    const nextCover =
+      input.cover !== undefined ? input.cover : current.data.cover;
+    const nextStatus = input.status ?? current.data.status;
+    if (nextStatus === "published" && !hasCover(nextCover))
+      return {
+        success: false as const,
+        error: new Error(COVER_REQUIRED_MESSAGE),
+      };
+
     return Universe.update(Environment.SERVER, input.universe, {
       title,
       description: input.description?.trim() || null,
@@ -616,6 +634,11 @@ export const approveUniverse = withAuthorization(
       return {
         success: false as const,
         error: new Error("missing-root-chapter"),
+      };
+    if (!hasCover(entry.data.cover))
+      return {
+        success: false as const,
+        error: new Error(COVER_REQUIRED_MESSAGE),
       };
 
     const rootId = entry.data.rootChapterId;
