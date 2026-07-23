@@ -180,7 +180,7 @@ The Studio uses **fixed typography only** — writers compose content, not styli
 The operator's control room. Abilities:
 
 - **Add new books / seed universes**; **upload AI covers**
-- **Catalog control** — **open**, **edit**, and **delete** any title (universe) and any chapter in the tree; editing covers **cover photo**, title/description/status/hook and full chapter text; deleting a title removes all chapters under it; deleting a chapter removes that node and its branches (deleting the root chapter removes the whole title)
+- **Catalog control** — **open**, **edit**, and **delete** any title (universe) and any chapter in the tree; editing covers **cover photo**, title/description/status/hook and full chapter text; deleting a title removes all chapters under it; deleting a chapter removes that node and its branches (deleting the root chapter removes the whole title). **A cover is required** to submit a new universe or to approve/publish one — missing covers are blocked with *"Your cover is missing — add it please."*
 - **Featured Slider management** — pick the 5–6 homepage hero universes, **toggle each on/off** with a switch, reorder, and edit hook copy *(hard requirement — drives the homepage hero)*
 - **Review submitted chapters** — moderation queue with diff against parent, continuity flags, and moderation results; **Approve / Reject** with reason
 - **Writer moderation** — warn, suspend, ban; handle **abuse reports**
